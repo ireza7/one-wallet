@@ -1,5 +1,4 @@
 -- schema.sql
-
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   telegram_id BIGINT NOT NULL UNIQUE,
@@ -11,7 +10,7 @@ CREATE TABLE IF NOT EXISTS addresses (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   user_id BIGINT NOT NULL,
   address VARCHAR(128) NOT NULL UNIQUE,
-  derivation_index INT NOT NULL, -- اگر از HD wallet استفاده می‌کنیم
+  derivation_index INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -19,7 +18,7 @@ CREATE TABLE IF NOT EXISTS addresses (
 CREATE TABLE IF NOT EXISTS accounts (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   user_id BIGINT NOT NULL UNIQUE,
-  balance_wei VARCHAR(64) DEFAULT '0', -- store as string to avoid BigInt issues
+  balance_wei VARCHAR(64) DEFAULT '0',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
