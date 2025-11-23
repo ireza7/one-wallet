@@ -3,16 +3,22 @@ const { initDB, getPool } = require('./db');
 const Wallet = require('./wallet');
 const TelegramBot = require('node-telegram-bot-api');
 const { SocksProxyAgent } = require('socks-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const SOCKS5_PROXY = process.env.SOCKS5_PROXY || '';
+const HTTPS_PROXY = process.env.HTTPS_PROXY || '';
 
 async function start() {
   await initDB();
   const pool = getPool();
 
   let requestOptions = {};
-  if (SOCKS5_PROXY) {
+  if (HTTPS_PROXY) {
+    const agent = new HttpsProxyAgent(HTTPS_PROXY);
+    requestOptions = { agent };
+    console.log('Using HTTPS proxy for Telegram:', HTTPS_PROXY);
+  } else if (SOCKS5_PROXY) {
     const agent = new SocksProxyAgent(SOCKS5_PROXY);
     requestOptions = { agent };
     console.log('Using SOCKS5 proxy for Telegram:', SOCKS5_PROXY);
