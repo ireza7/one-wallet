@@ -1,0 +1,42 @@
+-- schema.sql
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  telegram_id BIGINT NOT NULL UNIQUE,
+  username VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS addresses (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  address VARCHAR(128) NOT NULL UNIQUE,
+  derivation_index INT NOT NULL, -- اگر از HD wallet استفاده می‌کنیم
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS accounts (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL UNIQUE,
+  balance_wei VARCHAR(64) DEFAULT '0', -- store as string to avoid BigInt issues
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS txs (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  txid VARCHAR(128) NOT NULL UNIQUE,
+  from_address VARCHAR(128),
+  to_address VARCHAR(128),
+  amount_wei VARCHAR(64),
+  kind ENUM('deposit','sweep','withdraw','internal') NOT NULL,
+  user_id BIGINT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS admin (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  key_name VARCHAR(255) UNIQUE NOT NULL,
+  key_value TEXT NOT NULL
+);
