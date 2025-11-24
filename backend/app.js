@@ -1,0 +1,30 @@
+const path = require('path');
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const config = require('./config');
+
+const userRoutes = require('./routes/user');
+const walletRoutes = require('./routes/wallet');
+
+const app = express();
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// API routes
+app.use('/api/user', userRoutes);
+app.use('/api/wallet', walletRoutes);
+
+// Serve frontend as static files
+const frontendPath = path.resolve(__dirname, '../frontend');
+app.use(express.static(frontendPath));
+
+// Fallback to index.html for root
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.listen(config.port, () => {
+  console.log(`Backend API + Frontend running on port ${config.port}`);
+});

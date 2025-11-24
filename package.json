@@ -1,17 +1,19 @@
 {
-  "name": "harmony-bot",
+  "name": "harmony-telegram-miniapp-wallet",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "description": "Telegram Mini App wallet for Harmony ONE with internal balances and auto-sweep to hot wallet.",
+  "main": "backend/app.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node backend/app.js",
+    "monitor": "node backend/monitor.js",
+    "dev": "node backend/app.js & node backend/monitor.js"
   },
   "dependencies": {
-    "axios": "^1.5.0",
-    "dotenv": "^16.0.0",
-    "ethers": "^5.7.2",
-    "mysql2": "^3.2.0",
-    "node-telegram-bot-api": "^0.61.0",
-    "socks-proxy-agent": "^7.0.0",
-    "https-proxy-agent": "^7.0.4"
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.3",
+    "web3": "^4.16.0"
   }
 }

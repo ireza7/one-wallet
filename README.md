@@ -1,28 +1,106 @@
-# Harmony ONE Telegram Bot (Test-ready)
+# Harmony ONE Telegram Mini App Wallet
 
-این پروژه یک نمونهٔ **تست‌پذیر** از ربات تلگرام است که:
-- برای هر کاربر یک آدرس HD-derived ایجاد می‌کند.
-- واریزها به آن آدرس‌ها بررسی و به والت هات (hot wallet) sweep می‌شوند.
-- موجودی داخل ربات به‌صورت internal ذخیره شده و کاربران می‌توانند داخلی انتقال دهند یا برداشت کنند.
-- دیتابیس MySQL خارجی استفاده می‌شود؛ اسکریپت ساخت جداول در `sql/schema.sql` قرار دارد.
-- پروژه داکرایز شده برای راه‌اندازی سریع.
+این پروژه یک **Telegram Mini App** به عنوان کیف‌پول Harmony ONE است که:
 
-**هشدار امنیتی:** این یک نمونهٔ آموزشی و تستی است. هرگز از mnemonic یا private key اصلی در این نمونه استفاده نکنید. برای production از KMS، بررسی امنیتی و قوانین مالی استفاده کنید.
+- برای هر کاربر یک آدرس اختصاصی Harmony ایجاد می‌کند
+- فقط **ولت‌های کاربران** را مانیتور می‌کند (نه کل شبکه)
+- هر زمان موجودی آدرس کاربر روی زنجیره زیاد شود:
+  - آن مقدار به **موجودی داخلی** کاربر اضافه می‌شود
+  - همان مقدار از ولت کاربر به **هات‌ولت** منتقل (sweep) می‌شود
+- کاربران می‌توانند:
+  - موجودی داخلی خود را ببینند
+  - به کاربران دیگر (با username) انتقال داخلی بدهند
+  - به آدرس دلخواه Harmony برداشت بزنند
 
-## راه‌اندازی سریع برای تست
-1. MySQL را آماده کن و `sql/schema.sql` را اجرا کن.
-2. `.env` را بساز و مقداردهی کن (از `.env.example` کپی کن).
-3. اجرا محلی:
-   - `npm ci`
-   - `node src/index.js`
-4. یا با داکر:
-   - `docker build -t harmony-bot .`
-   - `docker run --env-file .env -v $(pwd):/app -p 3000:3000 harmony-bot`
+این پروژه شامل:
 
-فرمان‌ها:
-- `/start` — ثبت‌نام و ایجاد آدرس اختصاصی.
-- `/balance` — نمایش موجودی داخلی.
-- `/pay <username> <amount>` — انتقال داخلی به کاربر دیگر (username بدون @).
-- `/withdraw <amount> <toAddress>` — برداشت به آدرس هارمونی دلخواه.
+- Backend: Node.js + Express + MySQL + Web3
+- Frontend: Telegram WebApp (Mini App) ساده با HTML/JS
+- اسکریپت مانیتورینگ: `backend/monitor.js`
+- Dockerfile برای اجرا در یک کانتینر
 
-برای توسعه: لاگ‌ها را بازتر کن، ارسال تراکنش‌ها را با صف‌بندی امن‌تر کن و parsing دقیق تراکنش‌های ورودی را اضافه کن.
+> ⚠️ این پروژه نمونه‌ی آموزشی است؛ قبل از استفاده در محیط واقعی حتماً به امنیت، مدیریت Private Keyها و محدودیت‌ها توجه کنید.
+
+## راه‌اندازی
+
+### 1. دیتابیس
+
+فایل `sql/schema.sql` را روی دیتابیس MySQL خارجی خود اجرا کنید:
+
+```sql
+SOURCE sql/schema.sql;
+```
+
+یا محتوایش را در یک ابزار مثل phpMyAdmin / DBeaver اجرا کنید.
+
+### 2. تنظیم متغیرهای محیطی
+
+یک فایل `.env` در روت پروژه بسازید (کنار `package.json`) و مقادیر را از روی `.env.example` پر کنید:
+
+```bash
+cp .env.example .env
+```
+
+مقادیر مهم:
+
+- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- `HARMONY_RPC_URL`
+- `HOT_WALLET_PRIVATE_KEY`, `HOT_WALLET_ADDRESS`
+
+### 3. اجرای لوکال
+
+```bash
+npm install
+npm run dev
+```
+
+Backend روی `http://localhost:3000` اجرا می‌شود و frontend از پوشه `frontend/` به صورت استاتیک سرو می‌شود.
+
+### 4. اجرای با Docker
+
+```bash
+docker build -t harmony-miniapp-wallet .
+
+docker run -d \
+  --name harmony-miniapp-wallet \
+  -p 3000:3000 \
+  -e DB_HOST=your-db-host \
+  -e DB_PORT=3306 \
+  -e DB_USER=youruser \
+  -e DB_PASSWORD=yourpass \
+  -e DB_NAME=harmony_miniapp \
+  -e HARMONY_RPC_URL=https://api.harmony.one \
+  -e HOT_WALLET_PRIVATE_KEY=0xYOUR_PRIVATE_KEY \
+  -e HOT_WALLET_ADDRESS=0xYOUR_HOT_WALLET_ADDRESS \
+  harmony-miniapp-wallet
+```
+
+### 5. تنظیم Mini App در BotFather
+
+در BotFather:
+
+1. یک Bot بسازید (اگر نداری)
+2. دستور `/setdomain` یا `/setmenubutton` (بسته به حالت Mini App)
+3. URL وب‌اپ را بدهید، مثلاً:
+
+```
+https://your-domain.com/
+```
+
+این URL باید `frontend/index.html` را سرو کند (در این پروژه Express همین کار را انجام می‌دهد).
+
+### 6. نحوه کار مانیتورینگ ولت‌ها
+
+اسکریپت `backend/monitor.js` هر چند ثانیه:
+
+- لیست تمام کاربران را از جدول `users` می‌گیرد
+- موجودی زنجیره‌ای (`on-chain`) آدرس هر کاربر را با `web3.eth.getBalance` می‌خواند
+- اگر `chainBalance > last_onchain_balance` بود:
+  - `diff = chainBalance - last_onchain_balance` به عنوان **واریز جدید** در نظر گرفته می‌شود
+  - `internal_balance` کاربر به اندازه `diff` افزایش می‌یابد
+  - در `wallet_ledger` یک رکورد `deposit` ثبت می‌شود
+  - سپس همان `diff` از ولت کاربر به `HOT_WALLET_ADDRESS` سوییپ می‌شود
+  - `deposit_sweep` در لجر ثبت می‌شود
+  - مقدار `last_onchain_balance` به موجودی جدید شبکه آپدیت می‌شود
+
+به این شکل فقط **ولت‌های کاربران** مانیتور می‌شوند و نیازی به اسکن کل بلاک‌چین نیست.

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>Harmony ONE Wallet Mini App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Harmony ONE Wallet</h2>
+    <div id="status">در حال اتصال به تلگرام...</div>
+
+    <div id="wallet" class="card hidden">
+      <p><strong>آدرس واریز:</strong></p>
+      <p id="address" class="mono"></p>
+
+      <p><strong>موجودی داخلی:</strong></p>
+      <p id="balance">0 ONE</p>
+
+      <hr />
+
+      <h3>انتقال داخلی</h3>
+      <input id="toUser" placeholder="username بدون @" />
+      <input id="amountTransfer" type="number" placeholder="مبلغ ONE" />
+      <button id="btnTransfer">ارسال</button>
+
+      <hr />
+
+      <h3>برداشت</h3>
+      <input id="toAddress" placeholder="Harmony address" />
+      <input id="amountWithdraw" type="number" placeholder="مبلغ ONE" />
+      <button id="btnWithdraw">برداشت</button>
+
+      <p id="message" class="message"></p>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
