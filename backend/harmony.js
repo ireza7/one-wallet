@@ -1,29 +1,40 @@
 const { Web3 } = require("web3");
-const { hexToBech32 } = require("./utils/harmonyAddress");
 const config = require("./config");
 
 const web3 = new Web3(config.harmony.rpcUrl);
 
+// ساخت ولت
 async function generateUserWallet() {
   const account = web3.eth.accounts.create();
-
-  const hexAddress = account.address.toLowerCase();
-  const harmonyAddress = hexToBech32(hexAddress);
-
-  return {
-    address: harmonyAddress,   // one1xxxx
-    hexAddress: hexAddress,    // 0x....
-    privateKey: account.privateKey
-  };
+  return account;
 }
 
+// سوییپ از ولت کاربر به هات ولت
+async function sweepToHotWallet(fromHex, privateKey, amountOne) {
+  const gasPrice = await web3.eth.getGasPrice();   // ← نکته مهم
+  const amountWei = web3.utils.toWei(amountOne.toString(), "ether");
 
-// ارسال ONE از هات ولت
+  const nonce = await web3.eth.getTransactionCount(fromHex, "pending");
+
+  const tx = {
+    from: fromHex,
+    to: config.harmony.hotWalletAddress,
+    value: amountWei,
+    gas: 21000,
+    gasPrice: gasPrice,             // ← ضروری برای Harmony
+    nonce: nonce,
+    chainId: 1666600000             // Harmony Mainnet
+  };
+
+  const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
+
+  const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+  return receipt.transactionHash;
+}
+
+// برداشت از هات ولت
 async function sendFromHotWallet(toAddress, amountOne) {
-  if (!config.harmony.hotWalletPrivateKey || !config.harmony.hotWalletAddress) {
-    throw new Error("هات ولت تنظیم نشده");
-  }
-
+  const gasPrice = await web3.eth.getGasPrice();
   const amountWei = web3.utils.toWei(amountOne.toString(), "ether");
 
   const nonce = await web3.eth.getTransactionCount(
@@ -36,45 +47,23 @@ async function sendFromHotWallet(toAddress, amountOne) {
     to: toAddress,
     value: amountWei,
     gas: 21000,
-    nonce,
+    gasPrice: gasPrice,
+    nonce: nonce,
+    chainId: 1666600000
   };
 
-  const signed = await web3.eth.accounts.signTransaction(
+  const signedTx = await web3.eth.accounts.signTransaction(
     tx,
     config.harmony.hotWalletPrivateKey
   );
 
-  const receipt = await web3.eth.sendSignedTransaction(
-    signed.rawTransaction
-  );
-
-  return receipt.transactionHash;
-}
-
-// سوییپ از ولت کاربر به هات ولت
-async function sweepToHotWallet(fromAddress, privateKey, amountOne) {
-  const amountWei = web3.utils.toWei(amountOne.toString(), "ether");
-
-  const nonce = await web3.eth.getTransactionCount(fromAddress, "pending");
-
-  const tx = {
-    from: fromAddress,
-    to: config.harmony.hotWalletAddress,
-    value: amountWei,
-    gas: 21000,
-    nonce,
-  };
-
-  const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-
-  const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-
+  const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
   return receipt.transactionHash;
 }
 
 module.exports = {
   web3,
   generateUserWallet,
-  sendFromHotWallet,
   sweepToHotWallet,
+  sendFromHotWallet
 };
