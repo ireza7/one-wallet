@@ -3,9 +3,18 @@ const db = require('./db');
 
 let lastBlock = 0;
 
+function toNumberBlock(value) {
+  const asNumber = Number(value);
+  if (!Number.isFinite(asNumber)) {
+    throw new Error('Invalid block number received from RPC');
+  }
+  return asNumber;
+}
+
+
 async function scan() {
   try {
-    const currentBlock = await web3.eth.getBlockNumber();
+    const currentBlock = toNumberBlock(await web3.eth.getBlockNumber());
 
     if (lastBlock === 0) {
       // دفعه اول از آخرین بلاک شروع می‌کنیم

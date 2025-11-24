@@ -33,6 +33,13 @@ if (agent) {
 
 const bot = new TelegramBot(config.botToken, botOptions);
 
+bot.on('polling_error', (err) => {
+  console.error('Polling error:', err.message);
+  if (err.response && err.response.body) {
+    console.error('Polling response body:', err.response.body);
+  }
+});
+
 // ثبت کامندها
 registerCommands(bot);
 
