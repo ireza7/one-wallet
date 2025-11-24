@@ -1,5 +1,5 @@
 const { Web3 } = require("web3");
-const { toBech32 } = require("@harmony-js/crypto");
+const { hexToBech32 } = require("./utils/harmonyAddress");
 const config = require("./config");
 
 const web3 = new Web3(config.harmony.rpcUrl);
@@ -8,14 +8,15 @@ async function generateUserWallet() {
   const account = web3.eth.accounts.create();
 
   const hexAddress = account.address.toLowerCase();
-  const harmonyAddress = toBech32(hexAddress);
+  const harmonyAddress = hexToBech32(hexAddress);
 
   return {
-    address: harmonyAddress,     // آدرس Harmony
-    hexAddress: hexAddress,      // آدرس ETH hex
+    address: harmonyAddress,   // one1xxxx
+    hexAddress: hexAddress,    // 0x....
     privateKey: account.privateKey
   };
 }
+
 
 // ارسال ONE از هات ولت
 async function sendFromHotWallet(toAddress, amountOne) {
