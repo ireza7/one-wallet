@@ -1,13 +1,20 @@
 const { Web3 } = require("web3");
+const { toBech32 } = require("@harmony-js/crypto");
 const config = require("./config");
 
-// ساخت web3 صحیح برای نسخه 4
 const web3 = new Web3(config.harmony.rpcUrl);
 
-// ساخت ولت جدید برای کاربر
 async function generateUserWallet() {
   const account = web3.eth.accounts.create();
-  return account; // { address, privateKey }
+
+  const hexAddress = account.address.toLowerCase();
+  const harmonyAddress = toBech32(hexAddress);
+
+  return {
+    address: harmonyAddress,     // آدرس Harmony
+    hexAddress: hexAddress,      // آدرس ETH hex
+    privateKey: account.privateKey
+  };
 }
 
 // ارسال ONE از هات ولت
