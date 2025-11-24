@@ -9,34 +9,66 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h2>Harmony ONE Wallet</h2>
-    <div id="status">در حال اتصال به تلگرام...</div>
+  <div class="app-shell">
+    <header class="app-header">
+      <h1>Harmony ONE Wallet</h1>
+      <p class="subtitle">مینی‌اپ تلگرام با ولت اختصاصی، تاریخچه و دفترچه تراکنش</p>
+    </header>
 
-    <div id="wallet" class="card hidden">
-      <p><strong>آدرس واریز (Harmony ONE):</strong></p>
-      <p id="address" class="mono"></p>
+    <main class="app-main">
+      <div id="status" class="status">در حال اتصال به تلگرام...</div>
 
-      <p><strong>موجودی داخلی:</strong></p>
-      <p id="balance">0 ONE</p>
+      <div id="walletShell" class="hidden">
+        <div class="tabs">
+          <button id="tabWallet" class="tab active">کیف پول</button>
+          <button id="tabHistory" class="tab">تاریخچه</button>
+        </div>
 
-      <hr />
+        <section id="tabWalletView" class="tab-view">
+          <div class="card">
+            <h2>آدرس واریز شما</h2>
+            <p class="label">Harmony ONE Address (one1...)</p>
+            <p id="address" class="mono address-box"></p>
+          </div>
 
-      <h3>انتقال داخلی</h3>
-      <input id="toUser" placeholder="username بدون @" />
-      <input id="amountTransfer" type="number" placeholder="مبلغ ONE" />
-      <button id="btnTransfer">ارسال</button>
+          <div class="card balance-card">
+            <div class="balance-row">
+              <div>
+                <p class="label">موجودی داخلی</p>
+                <p id="balance" class="balance-value">0 ONE</p>
+              </div>
+              <div class="chip chip-green">آنلاین</div>
+            </div>
+          </div>
 
-      <hr />
+          <div class="card">
+            <h3>انتقال داخلی</h3>
+            <input id="toUser" placeholder="نام کاربری گیرنده (بدون @)" />
+            <input id="amountTransfer" type="number" min="0" step="0.00000001" placeholder="مبلغ ONE" />
+            <button id="btnTransfer">ارسال داخلی</button>
+          </div>
 
-      <h3>برداشت</h3>
-      <input id="toAddress" placeholder="Harmony address (one1... یا 0x...)" />
-      <input id="amountWithdraw" type="number" placeholder="مبلغ ONE" />
-      <button id="btnWithdraw">برداشت</button>
+          <div class="card">
+            <h3>برداشت به ولت خارجی</h3>
+            <input id="toAddress" placeholder="آدرس Harmony (one1... یا 0x...)" />
+            <input id="amountWithdraw" type="number" min="0" step="0.00000001" placeholder="مبلغ ONE" />
+            <button id="btnWithdraw">ثبت برداشت</button>
+          </div>
 
-      <p id="message" class="message"></p>
-    </div>
+          <p id="message" class="message"></p>
+        </section>
+
+        <section id="tabHistoryView" class="tab-view hidden">
+          <div class="card">
+            <h3>دفترچه تراکنش‌ها</h3>
+            <p class="label">آخرین ۱۰۰ تراکنش شما روی ربات</p>
+            <div id="historyList" class="history-list"></div>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
+
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 
 {
   "name": "harmony-telegram-miniapp-wallet",
-  "version": "1.1.0",
-  "description": "Telegram Mini App wallet for Harmony ONE with unified backend + monitor in single process.",
+  "version": "2.0.0",
+  "description": "Telegram Mini App wallet for Harmony ONE (unified backend + monitor + history/notes UI).",
   "main": "backend/index.js",
   "scripts": {
     "start": "node backend/index.js",

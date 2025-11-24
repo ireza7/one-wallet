@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS wallet_ledger (
       'admin_adjust'
     ) NOT NULL,
     amount DECIMAL(36,18) NOT NULL,
+    label VARCHAR(64) NULL,
+    note TEXT NULL,
     tx_hash VARCHAR(128),
     meta TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

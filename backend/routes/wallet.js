@@ -116,4 +116,60 @@ router.post('/withdraw', async (req, res) => {
   }
 });
 
+router.get('/history', async (req, res) => {
+  try {
+    const telegramId = req.query.telegram_id;
+    if (!telegramId) {
+      return res.status(400).json({ ok: false, error: "telegram_id لازم است" });
+    }
+
+    const user = await db.getUserByTelegramId(telegramId);
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "کاربر پیدا نشد" });
+    }
+
+    const [rows] = await db.pool.query(
+      `SELECT id, type, amount, tx_hash, label, note, created_at 
+       FROM wallet_ledger 
+       WHERE user_id = ? 
+       ORDER BY id DESC 
+       LIMIT 100`,
+      [user.id]
+    );
+
+    return res.json({ ok: true, history: rows });
+
+  } catch(err) {
+    console.error("/wallet/history error:", err);
+    return res.status(500).json({ ok: false, error: "internal error" });
+  }
+});
+
+router.post('/annotate', async (req, res) => {
+  try {
+    const { telegram_id, ledger_id, label, note } = req.body;
+
+    if (!telegram_id || !ledger_id) {
+      return res.status(400).json({ ok: false, error: "پارامتر ناقص" });
+    }
+
+    const user = await db.getUserByTelegramId(telegram_id);
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "کاربر پیدا نشد" });
+    }
+
+    await db.pool.query(
+      `UPDATE wallet_ledger SET label = ?, note = ? 
+       WHERE id = ? AND user_id = ?`,
+      [label || null, note || null, ledger_id, user.id]
+    );
+
+    return res.json({ ok: true });
+
+  } catch(err) {
+    console.error("/wallet/annotate error:", err);
+    return res.status(500).json({ ok: false, error: "internal error" });
+  }
+});
+
 module.exports = router;
