@@ -1,9 +1,8 @@
-const { Web3 } = require('web3');
-const config = require('./config');
+const { Web3 } = require("web3");
+const config = require("./config");
 
-const web3 = new Web3(
-  new Web3.HttpProvider(config.harmony.rpcUrl)
-);
+// ساخت web3 صحیح برای نسخه 4
+const web3 = new Web3(config.harmony.rpcUrl);
 
 // ساخت ولت جدید برای کاربر
 async function generateUserWallet() {
@@ -11,17 +10,17 @@ async function generateUserWallet() {
   return account; // { address, privateKey }
 }
 
-// ارسال ONE از هات‌ولت به آدرس کاربر (برداشت)
+// ارسال ONE از هات ولت
 async function sendFromHotWallet(toAddress, amountOne) {
   if (!config.harmony.hotWalletPrivateKey || !config.harmony.hotWalletAddress) {
-    throw new Error('پیکربندی هات‌ولت ناقص است');
+    throw new Error("هات ولت تنظیم نشده");
   }
 
-  const amountWei = web3.utils.toWei(amountOne.toString(), 'ether');
+  const amountWei = web3.utils.toWei(amountOne.toString(), "ether");
 
   const nonce = await web3.eth.getTransactionCount(
     config.harmony.hotWalletAddress,
-    'pending'
+    "pending"
   );
 
   const tx = {
@@ -44,15 +43,11 @@ async function sendFromHotWallet(toAddress, amountOne) {
   return receipt.transactionHash;
 }
 
-// ارسال ONE از ولت کاربر به هات‌ولت (برای sweep)
+// سوییپ از ولت کاربر به هات ولت
 async function sweepToHotWallet(fromAddress, privateKey, amountOne) {
-  if (!config.harmony.hotWalletAddress) {
-    throw new Error('هات‌ولت تنظیم نشده است');
-  }
+  const amountWei = web3.utils.toWei(amountOne.toString(), "ether");
 
-  const amountWei = web3.utils.toWei(amountOne.toString(), 'ether');
-
-  const nonce = await web3.eth.getTransactionCount(fromAddress, 'pending');
+  const nonce = await web3.eth.getTransactionCount(fromAddress, "pending");
 
   const tx = {
     from: fromAddress,
@@ -62,14 +57,9 @@ async function sweepToHotWallet(fromAddress, privateKey, amountOne) {
     nonce,
   };
 
-  const signed = await web3.eth.accounts.signTransaction(
-    tx,
-    privateKey
-  );
+  const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
 
-  const receipt = await web3.eth.sendSignedTransaction(
-    signed.rawTransaction
-  );
+  const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
   return receipt.transactionHash;
 }
