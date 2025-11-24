@@ -1,6 +1,7 @@
 const { Web3 } = require('web3');
 const config = require('./config');
 
+// Web3 v4 اکسپورت پیش‌فرض ندارد و باید از Web3 استفاده کنیم
 const web3 = new Web3(config.harmony.rpcUrl);
 
 // ساخت ولت جدید برای کاربر
