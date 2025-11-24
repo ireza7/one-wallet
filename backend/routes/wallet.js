@@ -52,7 +52,8 @@ router.post('/transfer', async (req, res) => {
       return res.status(404).json({ ok: false, error: 'فرستنده پیدا نشد' });
     }
 
-    const toUser = await db.getUserByUsername(to_username);
+    const username = to_username.replace(/^@/, '');
+    const toUser = await db.getUserByUsername(username);
     if (!toUser) {
       return res.status(404).json({ ok: false, error: 'گیرنده پیدا نشد' });
     }
@@ -98,7 +99,6 @@ router.post('/withdraw', async (req, res) => {
 
     const withdrawalId = await db.createWithdrawal(user.id, amt, to_address);
 
-    // ارسال روی زنجیره
     try {
       const txHash = await sendFromHotWallet(to_address, amt);
       await db.markWithdrawalSent(withdrawalId, txHash);

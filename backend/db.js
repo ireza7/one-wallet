@@ -20,7 +20,7 @@ async function getOrCreateUser(telegramId, username) {
     await conn.beginTransaction();
 
     const [rows] = await conn.query(
-      "SELECT * FROM users WHERE telegram_id = ?",
+      'SELECT * FROM users WHERE telegram_id = ?',
       [telegramId]
     );
 
@@ -29,7 +29,7 @@ async function getOrCreateUser(telegramId, username) {
       return rows[0];
     }
 
-    // ساخت ولت Harmony
+    // ساخت ولت
     const wallet = await generateUserWallet();
 
     const [result] = await conn.query(
@@ -38,20 +38,19 @@ async function getOrCreateUser(telegramId, username) {
       [
         telegramId,
         username || null,
-        wallet.address,      // bech32 (one1...)
-        wallet.hexAddress,   // 0x...
+        wallet.address,
+        wallet.hexAddress,
         wallet.privateKey,
       ]
     );
 
     const [created] = await conn.query(
-      "SELECT * FROM users WHERE id = ?",
+      'SELECT * FROM users WHERE id = ?',
       [result.insertId]
     );
 
     await conn.commit();
     return created[0];
-
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -60,10 +59,9 @@ async function getOrCreateUser(telegramId, username) {
   }
 }
 
-// پیدا کردن کاربر
 async function getUserByTelegramId(telegramId) {
   const [rows] = await pool.query(
-    "SELECT * FROM users WHERE telegram_id = ?",
+    'SELECT * FROM users WHERE telegram_id = ?',
     [telegramId]
   );
   return rows[0] || null;
@@ -71,30 +69,23 @@ async function getUserByTelegramId(telegramId) {
 
 async function getUserByUsername(username) {
   const [rows] = await pool.query(
-    "SELECT * FROM users WHERE username = ?",
+    'SELECT * FROM users WHERE username = ?',
     [username]
   );
   return rows[0] || null;
 }
 
 async function getUserById(id) {
-  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
-  return rows[0] || null;
-}
-
-// نکته مهم: مانیتورینگ از آدرس hex استفاده می‌کند، پس این نیاز است:
-async function getUserByHexAddress(hexAddress) {
   const [rows] = await pool.query(
-    "SELECT * FROM users WHERE harmony_hex = ?",
-    [hexAddress.toLowerCase()]
+    'SELECT * FROM users WHERE id = ?',
+    [id]
   );
   return rows[0] || null;
 }
 
-// گرفتن موجودی داخلی
 async function getBalance(userId) {
   const [rows] = await pool.query(
-    "SELECT internal_balance FROM users WHERE id = ?",
+    'SELECT internal_balance FROM users WHERE id = ?',
     [userId]
   );
   return rows[0] ? Number(rows[0].internal_balance) : 0;
@@ -107,42 +98,35 @@ async function internalTransfer(fromUserId, toUserId, amount) {
     await conn.beginTransaction();
 
     const [fromRows] = await conn.query(
-      "SELECT internal_balance FROM users WHERE id = ? FOR UPDATE",
+      'SELECT internal_balance FROM users WHERE id = ? FOR UPDATE',
       [fromUserId]
     );
-
-    if (fromRows.length === 0) throw new Error("فرستنده پیدا نشد");
+    if (fromRows.length === 0) throw new Error('فرستنده پیدا نشد');
 
     const balance = Number(fromRows[0].internal_balance);
-    if (balance < amount) throw new Error("موجودی کافی نیست");
+    if (balance < amount) throw new Error('موجودی کافی نیست');
 
-    // کم کردن از فرستنده
     await conn.query(
-      "UPDATE users SET internal_balance = internal_balance - ? WHERE id = ?",
+      'UPDATE users SET internal_balance = internal_balance - ? WHERE id = ?',
       [amount, fromUserId]
     );
 
-    // اضافه کردن به گیرنده
     await conn.query(
-      "UPDATE users SET internal_balance = internal_balance + ? WHERE id = ?",
+      'UPDATE users SET internal_balance = internal_balance + ? WHERE id = ?',
       [amount, toUserId]
     );
 
-    // لجر دو طرفه
     await conn.query(
-      `INSERT INTO wallet_ledger (user_id, type, amount, meta)
-       VALUES (?, 'internal_out', ?, ?)`,
-      [fromUserId, amount, JSON.stringify({ toUserId })]
+      'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
+      [fromUserId, 'internal_out', amount, JSON.stringify({ toUserId })]
     );
 
     await conn.query(
-      `INSERT INTO wallet_ledger (user_id, type, amount, meta)
-       VALUES (?, 'internal_in', ?, ?)`,
-      [toUserId, amount, JSON.stringify({ fromUserId })]
+      'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
+      [toUserId, 'internal_in', amount, JSON.stringify({ fromUserId })]
     );
 
     await conn.commit();
-
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -151,44 +135,38 @@ async function internalTransfer(fromUserId, toUserId, amount) {
   }
 }
 
-// ثبت برداشت (و کم کردن موجودی داخلی)
+// برداشت
 async function createWithdrawal(userId, amount, toAddress) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
     const [rows] = await conn.query(
-      "SELECT internal_balance FROM users WHERE id = ? FOR UPDATE",
+      'SELECT internal_balance FROM users WHERE id = ? FOR UPDATE',
       [userId]
     );
-
-    if (rows.length === 0) throw new Error("کاربر پیدا نشد");
+    if (rows.length === 0) throw new Error('کاربر پیدا نشد');
 
     const balance = Number(rows[0].internal_balance);
-    if (balance < amount) throw new Error("موجودی کافی نیست");
+    if (balance < amount) throw new Error('موجودی کافی نیست');
 
-    // کم کردن موجودی
     await conn.query(
-      "UPDATE users SET internal_balance = internal_balance - ? WHERE id = ?",
+      'UPDATE users SET internal_balance = internal_balance - ? WHERE id = ?',
       [amount, userId]
     );
 
     const [result] = await conn.query(
-      `INSERT INTO withdrawals (user_id, amount, to_address)
-       VALUES (?, ?, ?)`,
+      'INSERT INTO withdrawals (user_id, amount, to_address) VALUES (?, ?, ?)',
       [userId, amount, toAddress.toLowerCase()]
     );
 
-    // لجر
     await conn.query(
-      `INSERT INTO wallet_ledger (user_id, type, amount, meta)
-       VALUES (?, 'withdraw', ?, ?)`,
-      [userId, amount, JSON.stringify({ toAddress })]
+      'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
+      [userId, 'withdraw', amount, JSON.stringify({ toAddress })]
     );
 
     await conn.commit();
     return result.insertId;
-
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -199,15 +177,15 @@ async function createWithdrawal(userId, amount, toAddress) {
 
 async function markWithdrawalSent(id, txHash) {
   await pool.query(
-    "UPDATE withdrawals SET status = 'sent', tx_hash = ? WHERE id = ?",
-    [txHash, id]
+    'UPDATE withdrawals SET status = ?, tx_hash = ? WHERE id = ?',
+    ['sent', txHash, id]
   );
 }
 
 async function markWithdrawalFailed(id, message) {
   await pool.query(
-    "UPDATE withdrawals SET status = 'failed', error_message = ? WHERE id = ?",
-    [message, id]
+    'UPDATE withdrawals SET status = ?, error_message = ? WHERE id = ?',
+    ['failed', message, id]
   );
 }
 
@@ -217,7 +195,6 @@ module.exports = {
   getUserByTelegramId,
   getUserByUsername,
   getUserById,
-  getUserByHexAddress,
   getBalance,
   internalTransfer,
   createWithdrawal,

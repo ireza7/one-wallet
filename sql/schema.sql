@@ -1,48 +1,43 @@
-CREATE DATABASE IF NOT EXISTS harmony_miniapp
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+-- قبل از اجرای این فایل، دیتابیس موردنظر خود را انتخاب کنید:
+-- USE yourdbname;
 
-USE harmony_miniapp;
-
--- جدول کاربران
-DROP TABLE IF EXISTS users;
-
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     telegram_id BIGINT UNSIGNED NOT NULL UNIQUE,
     username VARCHAR(64),
+
+    -- آدرس Harmony برای نمایش (bech32)
     harmony_address VARCHAR(128) NOT NULL,
+
+    -- آدرس hex برای Web3
     harmony_hex VARCHAR(128) NOT NULL,
+
+    -- private key مربوط به harmony_hex
     harmony_private_key VARCHAR(256) NOT NULL,
+
     internal_balance DECIMAL(36,18) NOT NULL DEFAULT 0,
     last_onchain_balance DECIMAL(36,18) NOT NULL DEFAULT 0,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-
--- جدول لجر تراکنش‌ها
-DROP TABLE IF EXISTS wallet_ledger;
-
-CREATE TABLE wallet_ledger (
+CREATE TABLE IF NOT EXISTS wallet_ledger (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id INT UNSIGNED NOT NULL,
-
     type ENUM(
-      'deposit',         -- شناسایی واریز
-      'deposit_sweep',   -- انتقال به هات ولت
-      'withdraw',        -- برداشت کاربر
-      'internal_in',     -- دریافت داخلی
-      'internal_out',    -- ارسال داخلی
-      'admin_adjust'     -- اصلاح دستی
+      'deposit',
+      'deposit_sweep',
+      'withdraw',
+      'internal_in',
+      'internal_out',
+      'admin_adjust'
     ) NOT NULL,
 
     amount DECIMAL(36,18) NOT NULL,
-
     tx_hash VARCHAR(128),
     meta TEXT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -53,15 +48,10 @@ CREATE TABLE wallet_ledger (
     INDEX (type)
 ) ENGINE=InnoDB;
 
-
--- جدول درخواست برداشت
-DROP TABLE IF EXISTS withdrawals;
-
-CREATE TABLE withdrawals (
+CREATE TABLE IF NOT EXISTS withdrawals (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id INT UNSIGNED NOT NULL,
-
     amount DECIMAL(36,18) NOT NULL,
     to_address VARCHAR(128) NOT NULL,
 
@@ -71,7 +61,7 @@ CREATE TABLE withdrawals (
     error_message TEXT,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id)

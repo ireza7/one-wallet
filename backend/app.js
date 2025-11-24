@@ -16,11 +16,10 @@ app.use(bodyParser.json());
 app.use('/api/user', userRoutes);
 app.use('/api/wallet', walletRoutes);
 
-// Serve frontend as static files
+// Serve frontend
 const frontendPath = path.resolve(__dirname, '../frontend');
 app.use(express.static(frontendPath));
 
-// Fallback to index.html for root
 app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });

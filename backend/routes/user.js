@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// init: از طرف مینی‌اپ، اطلاعات تلگرام کاربر را می‌گیریم
+// init از طرف Mini App
 router.post('/init', async (req, res) => {
   try {
     const { telegram_id, username } = req.body;

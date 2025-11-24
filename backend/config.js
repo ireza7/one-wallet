@@ -13,6 +13,7 @@ const config = {
 
   harmony: {
     rpcUrl: process.env.HARMONY_RPC_URL || 'https://api.harmony.one',
+    chainId: Number(process.env.HARMONY_CHAIN_ID || 1666600000),
     hotWalletPrivateKey: process.env.HOT_WALLET_PRIVATE_KEY,
     hotWalletAddress: process.env.HOT_WALLET_ADDRESS,
   },
@@ -22,9 +23,5 @@ const config = {
     currencySymbol: process.env.BOT_BASE_CURRENCY || 'ONE',
   },
 };
-
-if (!config.db.host) {
-  console.warn('DB_HOST not set – remember to configure database connection via env.');
-}
 
 module.exports = config;

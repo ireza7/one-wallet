@@ -47,7 +47,7 @@ function convertBits(data, from, to, pad = true) {
     acc = (acc << from) | value;
     bits += from;
     while (bits >= to) {
-      bits -= to;
+      bits -= from;
       ret.push((acc >> bits) & maxv);
     }
   }
@@ -59,43 +59,36 @@ function convertBits(data, from, to, pad = true) {
   return ret;
 }
 
-// تبدیل HEX به Harmony bech32
 function hexToBech32(hexAddress) {
-  let hex = hexAddress.toLowerCase().replace(/^0x/, "");
-
-  // تبدیل به bytes
+  let hex = hexAddress.toLowerCase().replace(/^0x/, '');
   const bytes = [];
   for (let i = 0; i < hex.length; i += 2) {
-    bytes.push(parseInt(hex.substring(i, i + 2), 16));
+    bytes.push(parseInt(hex.slice(i, i + 2), 16));
   }
-
   const words = convertBits(bytes, 8, 5, true);
-  return bech32Encode("one", words);
+  return bech32Encode('one', words);
 }
 
-// تبدیل bech32 به hex (اختیاری)
 function bech32ToHex(oneAddress) {
   const addr = oneAddress.toLowerCase();
-  if (!addr.startsWith("one1")) throw new Error("invalid harmony address");
+  if (!addr.startsWith('one1')) throw new Error('invalid harmony address');
 
-  const pos = addr.lastIndexOf('1');
-  const dataPart = addr.substring(pos + 1);
+  const pos = addr.indexOf('1');
+  const dataPart = addr.slice(pos + 1);
 
   const values = [];
-  for (let c of dataPart) {
+  for (const c of dataPart) {
     const idx = ALPHABET.indexOf(c);
-    if (idx === -1) throw new Error("invalid character in address");
+    if (idx === -1) throw new Error('invalid character in address');
     values.push(idx);
   }
 
-  // remove checksum (last 6 chars)
-  const data = values.slice(0, -6);
-
+  const data = values.slice(0, -6); // strip checksum
   const bytes = convertBits(data, 5, 8, false);
-  return "0x" + bytes.map(b => b.toString(16).padStart(2, "0")).join("");
+  return '0x' + bytes.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 module.exports = {
   hexToBech32,
-  bech32ToHex
+  bech32ToHex,
 };

@@ -13,5 +13,4 @@ COPY .env.example ./
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Run API and monitor together
 CMD ["sh", "-c", "node backend/app.js & node backend/monitor.js && wait"]

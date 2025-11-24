@@ -1,6 +1,7 @@
 const { web3, sweepToHotWallet } = require('./harmony');
 const db = require('./db');
 
+// مانیتورینگ ولت کاربران بر اساس اختلاف موجودی on-chain
 async function monitorDepositDifferences() {
   try {
     const [users] = await db.pool.query(
@@ -9,14 +10,12 @@ async function monitorDepositDifferences() {
 
     for (const u of users) {
       try {
-        // ❗ فقط HEX address مجاز است
         const balanceWei = await web3.eth.getBalance(u.harmony_hex);
         const chainBalance = Number(web3.utils.fromWei(balanceWei, 'ether'));
         const lastBalance = Number(u.last_onchain_balance || 0);
 
         if (chainBalance > lastBalance) {
           const diff = chainBalance - lastBalance;
-
           console.log(`Deposit detected for user ${u.id}: ${diff} ONE`);
 
           await db.pool.query(
@@ -29,10 +28,9 @@ async function monitorDepositDifferences() {
             [u.id, 'deposit', diff, JSON.stringify({ monitor: true })]
           );
 
-          // Sweep فقط با آدرس HEX
           try {
             const txHash = await sweepToHotWallet(
-              u.harmony_hex,         // ←← اینجا مهم است
+              u.harmony_hex,
               u.harmony_private_key,
               diff
             );
@@ -53,14 +51,13 @@ async function monitorDepositDifferences() {
             console.error('sweepToHotWallet error:', sweepErr);
           }
         } else if (chainBalance !== lastBalance) {
-          // sync کم شدن موجودی
           await db.pool.query(
             'UPDATE users SET last_onchain_balance = ? WHERE id = ?',
             [chainBalance, u.id]
           );
         }
-      } catch (errUser) {
-        console.error("monitor user error:", u.id, errUser.message);
+      } catch (userErr) {
+        console.error('monitor user error:', u.id, userErr.message);
       }
     }
   } catch (err) {
@@ -70,4 +67,4 @@ async function monitorDepositDifferences() {
 
 setInterval(monitorDepositDifferences, 7000);
 
-console.log("Harmony wallet monitor started...");
+console.log('Harmony wallet monitor started...');

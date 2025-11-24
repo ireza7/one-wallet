@@ -145,8 +145,6 @@ btnWithdraw.addEventListener('click', async () => {
   }
 });
 
-// چند ثانیه یکبار، موجودی داخلی را بروز می‌کنیم (مثلاً بعد از مانیتورینگ)
 setInterval(refreshBalance, 10000);
 
-// شروع
 init();

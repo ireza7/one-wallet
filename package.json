@@ -1,7 +1,7 @@
 {
   "name": "harmony-telegram-miniapp-wallet",
   "version": "1.0.0",
-  "description": "Telegram Mini App wallet for Harmony ONE with internal balances and auto-sweep to hot wallet.",
+  "description": "Telegram Mini App wallet for Harmony ONE with internal balances and auto-sweep to hot wallet (fixed address handling).",
   "main": "backend/app.js",
   "scripts": {
     "start": "node backend/app.js",
