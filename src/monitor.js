@@ -2,10 +2,21 @@ const { web3, sweepToHotWallet } = require('./harmony');
 const db = require('./db');
 
 let lastBlock = 0;
+let depositAddresses = new Map();
+let lastDepositRefresh = 0;
+const DEPOSIT_REFRESH_MS = 60_000;
+
+function toNumberBlock(value) {
+  const asNumber = Number(value);
+  if (!Number.isFinite(asNumber)) {
+    throw new Error('Invalid block number received from RPC');
+  }
+  return asNumber;
+}
 
 async function scan() {
   try {
-    const currentBlock = await web3.eth.getBlockNumber();
+    const currentBlock = toNumberBlock(await web3.eth.getBlockNumber());
 
     if (lastBlock === 0) {
       // دفعه اول از آخرین بلاک شروع می‌کنیم
@@ -13,6 +24,8 @@ async function scan() {
       console.log('Monitor initial block:', lastBlock);
       return;
     }
+
+    await refreshDepositAddresses();
 
     for (let i = lastBlock; i <= currentBlock; i++) {
       const block = await web3.eth.getBlock(i, true);
@@ -36,11 +49,10 @@ async function processTx(tx) {
 
   try {
     const toAddress = tx.to.toLowerCase();
-
-    const user = await db.getUserByHarmonyAddress(toAddress);
+    const user = depositAddresses.get(toAddress);
     if (!user) return;
 
-    const amountOne = Number(web3.utils.fromWei(tx.value, 'ether'));
+    const amountOne = Number(web3.utils.fromWei(tx.value.toString(), 'ether'));
 
     if (amountOne <= 0) return;
 
@@ -64,6 +76,23 @@ async function processTx(tx) {
   } catch (err) {
     console.error('processTx error:', err.message);
   }
+}
+
+async function refreshDepositAddresses() {
+  if (Date.now() - lastDepositRefresh < DEPOSIT_REFRESH_MS) return;
+
+  const [rows] = await db.pool.query(
+    'SELECT id, harmony_address, harmony_private_key FROM users WHERE harmony_address IS NOT NULL'
+  );
+
+  depositAddresses = new Map(
+    rows
+      .filter((row) => row.harmony_address)
+      .map((row) => [row.harmony_address.toLowerCase(), row])
+  );
+
+  lastDepositRefresh = Date.now();
+  console.log('Loaded deposit addresses:', depositAddresses.size);
 }
 
 async function sweepUserWallet(user, amountOne) {
