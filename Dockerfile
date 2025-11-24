@@ -1,19 +1,17 @@
 FROM node:20-alpine
 
-# Set working directory
+RUN apk add --no-cache bash
+
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+COPY package*.json ./
+RUN npm install --only=production
 
-# Install only production deps
-RUN npm install --omit=dev
+COPY src ./src
+COPY sql ./sql
+COPY .env.example ./
 
-# Copy the rest of the project
-COPY . .
-
-# Environment
 ENV NODE_ENV=production
 
-# Start the bot
-CMD ["node", "src/index.js"]
+# Run bot and monitor in the same container
+CMD ["sh", "-c", "node src/index.js & node src/monitor.js && wait"]

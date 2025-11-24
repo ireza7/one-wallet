@@ -1,28 +1,53 @@
-# Harmony ONE Telegram Bot (Test-ready)
+# Harmony Telegram Wallet Bot
 
-این پروژه یک نمونهٔ **تست‌پذیر** از ربات تلگرام است که:
-- برای هر کاربر یک آدرس HD-derived ایجاد می‌کند.
-- واریزها به آن آدرس‌ها بررسی و به والت هات (hot wallet) sweep می‌شوند.
-- موجودی داخل ربات به‌صورت internal ذخیره شده و کاربران می‌توانند داخلی انتقال دهند یا برداشت کنند.
-- دیتابیس MySQL خارجی استفاده می‌شود؛ اسکریپت ساخت جداول در `sql/schema.sql` قرار دارد.
-- پروژه داکرایز شده برای راه‌اندازی سریع.
+ربات تلگرام با Node.js که مثل یک ولت تجمیعی برای شبکه Harmony ONE عمل می‌کند:
 
-**هشدار امنیتی:** این یک نمونهٔ آموزشی و تستی است. هرگز از mnemonic یا private key اصلی در این نمونه استفاده نکنید. برای production از KMS، بررسی امنیتی و قوانین مالی استفاده کنید.
+- هر کاربر یک آدرس اختصاصی برای واریز دریافت می‌کند
+- واریزها به صورت **خودکار** روی بلاک‌چین شناسایی می‌شوند
+- مبلغ واریز شده به **موجودی داخلی** کاربر اضافه می‌شود
+- سپس موجودی آدرس کاربر به صورت خودکار به **هات‌ولت** منتقل (sweep) می‌شود
+- کاربر می‌تواند:
+  - انتقال داخلی به کاربران دیگر انجام دهد
+  - برداشت به هر آدرس Harmony انجام دهد
 
-## راه‌اندازی سریع برای تست
-1. MySQL را آماده کن و `sql/schema.sql` را اجرا کن.
-2. `.env` را بساز و مقداردهی کن (از `.env.example` کپی کن).
-3. اجرا محلی:
-   - `npm ci`
-   - `node src/index.js`
-4. یا با داکر:
-   - `docker build -t harmony-bot .`
-   - `docker run --env-file .env -v $(pwd):/app -p 3000:3000 harmony-bot`
+## راه‌اندازی
 
-فرمان‌ها:
-- `/start` — ثبت‌نام و ایجاد آدرس اختصاصی.
-- `/balance` — نمایش موجودی داخلی.
-- `/pay <username> <amount>` — انتقال داخلی به کاربر دیگر (username بدون @).
-- `/withdraw <amount> <toAddress>` — برداشت به آدرس هارمونی دلخواه.
+1. ساخت دیتابیس و جداول:
 
-برای توسعه: لاگ‌ها را بازتر کن، ارسال تراکنش‌ها را با صف‌بندی امن‌تر کن و parsing دقیق تراکنش‌های ورودی را اضافه کن.
+```sql
+SOURCE sql/schema.sql;
+```
+
+2. تنظیم `.env` (بر اساس `.env.example`)
+
+3. اجرای لوکال:
+
+```bash
+npm install
+npm run dev
+```
+
+4. اجرای با Docker:
+
+```bash
+docker build -t harmony-telegram-wallet-bot .
+
+docker run -d \
+  --name harmony-bot \
+  -e BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN \
+  -e DB_HOST=your-db-host \
+  -e DB_PORT=3306 \
+  -e DB_USER=youruser \
+  -e DB_PASSWORD=yourpass \
+  -e DB_NAME=harmony_bot \
+  -e HARMONY_RPC_URL=https://api.harmony.one \
+  -e HOT_WALLET_PRIVATE_KEY=0xYOUR_PRIVATE_KEY \
+  -e HOT_WALLET_ADDRESS=0xYOUR_HOT_WALLET_ADDRESS \
+  -e PROXY_URL="socks5://user:pass@host:port" \
+  harmony-telegram-wallet-bot
+```
+
+> ⚠️ **هشدار امنیتی:** این پروژه یک نمونه‌ی آموزشی است. برای استفاده در محیط واقعی حتماً:
+> - Private Key ها را رمزگذاری و در secret manager نگه‌داری کنید
+> - دسترسی دیتابیس و سرور را محدود کنید
+> - محدودیت برداشت، لاگ‌گیری و مانیتورینگ امنیتی اضافه کنید.
