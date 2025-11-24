@@ -38,7 +38,7 @@ async function monitorDepositDifferences() {
           // تلاش برای سوییپ کامل مقدار به هات ولت
           try {
             const txHash = await sweepToHotWallet(
-              u.harmony_address,        // ← فقط آدرس ONE
+              fromHex,
               u.harmony_private_key,    // ← کلید خصوصی صحیح
               diff                       // مقدار سوییپ
             );
