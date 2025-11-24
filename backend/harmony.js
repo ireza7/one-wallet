@@ -32,16 +32,16 @@ async function sendFromHotWallet(toAddressInput, amountOne) {
     throw new Error('هات ولت تنظیم نشده است');
   }
 
-  const toHex = normalizeToHex(toAddressInput);
+  const hotWalletHex = normalizeToHex(config.harmony.hotWalletAddress);
   const amountWei = web3.utils.toWei(amountOne.toString(), 'ether');
   const gasPrice = await web3.eth.getGasPrice();
   const nonce = await web3.eth.getTransactionCount(
-    config.harmony.hotWalletAddress,
+    hotWalletHex,
     'pending'
   );
 
   const tx = {
-    from: config.harmony.hotWalletAddress,
+    from: hotWalletHex,
     to: toHex,
     value: amountWei,
     gas: 21000,
@@ -67,13 +67,14 @@ async function sweepToHotWallet(fromHex, privateKey, amountOne) {
     throw new Error('هات ولت تنظیم نشده است');
   }
 
+  const hotWalletHex = normalizeToHex(config.harmony.hotWalletAddress);
   const amountWei = web3.utils.toWei(amountOne.toString(), 'ether');
   const gasPrice = await web3.eth.getGasPrice();
   const nonce = await web3.eth.getTransactionCount(fromHex, 'pending');
 
   const tx = {
     from: fromHex,
-    to: config.harmony.hotWalletAddress,
+    to: hotWalletHex,
     value: amountWei,
     gas: 21000,
     gasPrice,
