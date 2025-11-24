@@ -1,3 +1,4 @@
+
 const mysql = require('mysql2/promise');
 const config = require('./config');
 const { generateUserWallet } = require('./harmony');
@@ -13,7 +14,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-// ایجاد یا دریافت کاربر + ساخت ولت Harmony
 async function getOrCreateUser(telegramId, username) {
   const conn = await pool.getConnection();
   try {
@@ -29,7 +29,6 @@ async function getOrCreateUser(telegramId, username) {
       return rows[0];
     }
 
-    // ساخت ولت
     const wallet = await generateUserWallet();
 
     const [result] = await conn.query(
@@ -91,7 +90,6 @@ async function getBalance(userId) {
   return rows[0] ? Number(rows[0].internal_balance) : 0;
 }
 
-// انتقال داخلی
 async function internalTransfer(fromUserId, toUserId, amount) {
   const conn = await pool.getConnection();
   try {
@@ -110,7 +108,6 @@ async function internalTransfer(fromUserId, toUserId, amount) {
       'UPDATE users SET internal_balance = internal_balance - ? WHERE id = ?',
       [amount, fromUserId]
     );
-
     await conn.query(
       'UPDATE users SET internal_balance = internal_balance + ? WHERE id = ?',
       [amount, toUserId]
@@ -120,7 +117,6 @@ async function internalTransfer(fromUserId, toUserId, amount) {
       'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
       [fromUserId, 'internal_out', amount, JSON.stringify({ toUserId })]
     );
-
     await conn.query(
       'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
       [toUserId, 'internal_in', amount, JSON.stringify({ fromUserId })]
@@ -135,7 +131,6 @@ async function internalTransfer(fromUserId, toUserId, amount) {
   }
 }
 
-// برداشت
 async function createWithdrawal(userId, amount, toAddress) {
   const conn = await pool.getConnection();
   try {

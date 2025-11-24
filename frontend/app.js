@@ -1,3 +1,4 @@
+
 const tg = window.Telegram.WebApp;
 tg.expand();
 
@@ -43,7 +44,6 @@ async function init() {
     }
 
     currentUser = data.user;
-
     addressEl.innerText = currentUser.harmony_address;
     balanceEl.innerText = currentUser.internal_balance + ' ONE';
 

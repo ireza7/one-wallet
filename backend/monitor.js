@@ -1,7 +1,7 @@
+
 const { web3, sweepToHotWallet } = require('./harmony');
 const db = require('./db');
 
-// مانیتورینگ ولت کاربران بر اساس اختلاف موجودی on-chain
 async function monitorDepositDifferences() {
   try {
     const [users] = await db.pool.query(
@@ -65,6 +65,9 @@ async function monitorDepositDifferences() {
   }
 }
 
-setInterval(monitorDepositDifferences, 7000);
+function startMonitor() {
+  console.log('Harmony wallet monitor started (unified process)...');
+  setInterval(monitorDepositDifferences, 7000);
+}
 
-console.log('Harmony wallet monitor started...');
+module.exports = startMonitor;

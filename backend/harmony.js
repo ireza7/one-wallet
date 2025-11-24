@@ -1,37 +1,32 @@
+
 const { Web3 } = require('web3');
 const config = require('./config');
 const { hexToBech32, bech32ToHex } = require('./utils/harmonyAddress');
 
 const web3 = new Web3(config.harmony.rpcUrl);
 
-// ساخت ولت جدید برای کاربر (hex + bech32)
 async function generateUserWallet() {
   const account = web3.eth.accounts.create();
   const hexAddress = account.address.toLowerCase();
   const bech32Address = hexToBech32(hexAddress);
 
   return {
-    address: bech32Address,     // one1...
-    hexAddress: hexAddress,     // 0x...
+    address: bech32Address,
+    hexAddress: hexAddress,
     privateKey: account.privateKey,
   };
 }
 
-// تبدیل universal address ورودی (one1... یا 0x...) به hex معتبر
 function normalizeToHex(address) {
   if (!address) throw new Error('empty address');
-  const lower = address.toLowerCase().trim();
+  const lower = address.trim().toLowerCase();
 
-  if (lower.startsWith('0x')) {
-    return lower;
-  }
-  if (lower.startsWith('one1')) {
-    return bech32ToHex(lower);
-  }
+  if (lower.startsWith('0x')) return lower;
+  if (lower.startsWith('one1')) return bech32ToHex(lower);
+
   throw new Error('unsupported address format');
 }
 
-// ارسال ONE از هات‌ولت به آدرس مقصد (برداشت کاربر)
 async function sendFromHotWallet(toAddressInput, amountOne) {
   if (!config.harmony.hotWalletPrivateKey || !config.harmony.hotWalletAddress) {
     throw new Error('هات ولت تنظیم نشده است');
@@ -67,7 +62,6 @@ async function sendFromHotWallet(toAddressInput, amountOne) {
   return receipt.transactionHash;
 }
 
-// سوییپ از ولت کاربر به هات ولت
 async function sweepToHotWallet(fromHex, privateKey, amountOne) {
   if (!config.harmony.hotWalletAddress) {
     throw new Error('هات ولت تنظیم نشده است');

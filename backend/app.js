@@ -1,3 +1,4 @@
+
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -7,23 +8,27 @@ const config = require('./config');
 const userRoutes = require('./routes/user');
 const walletRoutes = require('./routes/wallet');
 
-const app = express();
+function createApp() {
+  const app = express();
 
-app.use(cors());
-app.use(bodyParser.json());
+  app.use(cors());
+  app.use(bodyParser.json());
 
-// API routes
-app.use('/api/user', userRoutes);
-app.use('/api/wallet', walletRoutes);
+  app.use('/api/user', userRoutes);
+  app.use('/api/wallet', walletRoutes);
 
-// Serve frontend
-const frontendPath = path.resolve(__dirname, '../frontend');
-app.use(express.static(frontendPath));
+  const frontendPath = path.resolve(__dirname, '../frontend');
+  app.use(express.static(frontendPath));
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
 
-app.listen(config.port, () => {
-  console.log(`Backend API + Frontend running on port ${config.port}`);
-});
+  app.listen(config.port, () => {
+    console.log(`Backend API + Frontend running on port ${config.port}`);
+  });
+
+  return app;
+}
+
+module.exports = createApp;

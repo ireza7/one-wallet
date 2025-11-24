@@ -1,10 +1,10 @@
+
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const config = require('../config');
 const { sendFromHotWallet } = require('../harmony');
 
-// دریافت اطلاعات ولت کاربر
 router.get('/me', async (req, res) => {
   try {
     const telegramId = req.query.telegram_id;
@@ -33,7 +33,6 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// انتقال داخلی
 router.post('/transfer', async (req, res) => {
   try {
     const { from_telegram_id, to_username, amount } = req.body;
@@ -71,7 +70,6 @@ router.post('/transfer', async (req, res) => {
   }
 });
 
-// برداشت
 router.post('/withdraw', async (req, res) => {
   try {
     const { telegram_id, to_address, amount } = req.body;
