@@ -68,7 +68,7 @@ async function monitorDepositDifferences() {
 }
 
 function startMonitor() {
-  console.log('Harmony wallet monitor started (unified process)...');
+  console.log('Harmony wallet monitor started (standalone process)...');
   setInterval(monitorDepositDifferences, 7000);
 }
 

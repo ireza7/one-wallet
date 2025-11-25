@@ -16,6 +16,10 @@ const config = {
     hotWalletPrivateKey: process.env.HOT_WALLET_PRIVATE_KEY,
     hotWalletAddress: process.env.HOT_WALLET_ADDRESS,
   },
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN,
+    authMaxAgeSeconds: Number(process.env.TELEGRAM_AUTH_MAX_AGE || 86400),
+  },
   business: {
     minWithdrawAmount: Number(process.env.MIN_WITHDRAW_AMOUNT || 1),
     currencySymbol: process.env.BOT_BASE_CURRENCY || 'ONE',

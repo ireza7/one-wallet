@@ -3,15 +3,23 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
+/**
+ * Initialize or fetch user based on verified Telegram WebApp identity.
+ * Telegram identity is provided by telegramAuthMiddleware via req.telegramUser.
+ */
 router.post('/init', async (req, res) => {
   try {
-    const { telegram_id, username } = req.body;
+    const telegramId = req.telegramUser && req.telegramUser.telegramId;
+    const usernameFromAuth = req.telegramUser && req.telegramUser.username;
 
-    if (!telegram_id) {
-      return res.status(400).json({ ok: false, error: 'telegram_id لازم است' });
+    if (!telegramId) {
+      return res.status(400).json({ ok: false, error: 'عدم احراز هویت تلگرام' });
     }
 
-    const user = await db.getOrCreateUser(telegram_id, username || null);
+    // Allow optional username override from body, but prefer Telegram username
+    const username = (req.body && req.body.username) || usernameFromAuth || null;
+
+    const user = await db.getOrCreateUser(telegramId, username);
 
     return res.json({
       ok: true,

@@ -1,6 +1,7 @@
 
 const createApp = require('./app');
-const startMonitor = require('./monitor');
 
+// Start only the API + frontend server in this process.
+// The Harmony deposit monitor should be started from a separate process
+// (see monitor-runner.js).
 createApp();
-startMonitor();

@@ -1,5 +1,5 @@
 const Web3 = require('web3');
-const { fromBech32, toChecksumAddress } = require('@harmony-js/crypto');
+const { fromBech32, toChecksumAddress, toBech32 } = require('@harmony-js/crypto');
 const config = require('./config');
 
 const web3 = new Web3(new Web3.providers.HttpProvider(config.harmony.rpcUrl));
@@ -108,6 +108,31 @@ async function sweepToHotWallet(fromAddress, privateKey, amountOne) {
   return receipt.transactionHash;
 }
 
+
+/**
+ * ایجاد کیف پول جدید برای کاربر
+ * خروجی شامل آدرس bech32، آدرس hex و کلید خصوصی است
+ */
+function generateUserWallet() {
+  const account = web3.eth.accounts.create();
+
+  const hexAddress = toChecksumAddress(account.address);
+
+  let bech32Address;
+  try {
+    bech32Address = toBech32(hexAddress);
+  } catch (err) {
+    console.error('convert hex to bech32 failed, fallback to hex address:', err.message);
+    bech32Address = hexAddress;
+  }
+
+  return {
+    address: bech32Address,
+    hexAddress,
+    privateKey: account.privateKey,
+  };
+}
+
 /**
  * دریافت موجودی (hex یا bech32)
  */
@@ -118,9 +143,11 @@ async function getBalance(address) {
 }
 
 module.exports = {
+  web3,
   normalizeToHex,
   getHotWalletHex,
   sweepToHotWallet,
   sendFromHotWallet,
   getBalance,
+  generateUserWallet,
 };

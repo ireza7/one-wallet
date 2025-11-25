@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const config = require('./config');
+const { telegramAuthMiddleware } = require('./middleware/telegramAuth');
 
 const userRoutes = require('./routes/user');
 const walletRoutes = require('./routes/wallet');
@@ -13,6 +14,9 @@ function createApp() {
 
   app.use(cors());
   app.use(bodyParser.json());
+
+  // Protect all /api routes with Telegram WebApp auth
+  app.use('/api', telegramAuthMiddleware);
 
   app.use('/api/user', userRoutes);
   app.use('/api/wallet', walletRoutes);
