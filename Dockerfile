@@ -1,4 +1,3 @@
-
 FROM node:20-alpine
 
 WORKDIR /app
@@ -9,6 +8,7 @@ RUN npm install --only=production
 COPY . .
 
 ENV NODE_ENV=production
-ENV PORT=3000
 
-CMD ["node", "backend/index.js"]
+EXPOSE 3000
+
+CMD ["node", "src/server.js"]

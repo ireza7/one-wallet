@@ -1,21 +1,23 @@
 {
-  "name": "harmony-telegram-miniapp-wallet",
-  "version": "2.0.0",
-  "description": "Telegram Mini App wallet for Harmony ONE (unified backend + monitor + history/notes UI).",
-  "main": "backend/index.js",
+  "name": "harmony-one-telegram-miniapp",
+  "version": "1.0.0",
+  "description": "Telegram Mini App wallet for Harmony ONE with HD wallet and sweep.",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node backend/index.js",
-    "dev": "NODE_ENV=development node backend/index.js"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
   },
   "dependencies": {
-    "body-parser": "^1.20.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.2",
-    "mysql2": "^3.11.3",
-    "ethers": "^6.13.4",
-    "bech32": "^2.0.0",
-    "express-rate-limit": "^7.4.0",
-    "pino": "^9.0.0"
+    "@harmony-js/core": "^1.0.0",
+    "@harmony-js/crypto": "^1.0.0",
+    "@harmony-js/utils": "^1.0.0",
+    "axios": "^1.7.0",
+    "bip39": "^3.1.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.19.0",
+    "mysql2": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }
