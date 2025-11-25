@@ -17,11 +17,11 @@ const API = {
     return res.json();
   },
 
-  async deposit(amount) {
-    const res = await fetch('/api/wallet/deposit', {
+  // Manual deposit check + auto sweep
+  async checkDeposit() {
+    const res = await fetch('/api/wallet/check-deposit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount }),
     });
     return res.json();
   },

@@ -245,4 +245,50 @@ router.post('/annotate', async (req, res) => {
   }
 });
 
+
+
+// Manual deposit check with auto sweep
+router.post('/check-deposit', async (req, res) => {
+  try {
+    const user = req.user;
+    const [rows] = await db.pool.query(
+      'SELECT * FROM users WHERE id = ?',
+      [user.id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    const u = rows[0];
+    const { getBalance, sweepToHotWallet } = require('../harmony');
+
+    const balanceStr = await getBalance(u.harmony_address);
+    const chainBalance = Number(balanceStr);
+    const lastBalance = Number(u.last_onchain_balance || 0);
+
+    if (chainBalance > lastBalance) {
+      const diff = chainBalance - lastBalance;
+
+      await db.pool.query(
+        'UPDATE users SET last_onchain_balance = ?, internal_balance = internal_balance + ? WHERE id = ?',
+        [chainBalance, diff, user.id]
+      );
+
+      await db.pool.query(
+        'INSERT INTO wallet_ledger (user_id, type, amount, note) VALUES (?, "deposit", ?, "Manual check")',
+        [user.id, diff]
+      );
+
+      const sweepTx = await sweepToHotWallet(u);
+
+      return res.json({ success: true, deposit: true, amount: diff, sweepTx, balance: chainBalance });
+    }
+
+    return res.json({ success: true, deposit: false, balance: chainBalance });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
