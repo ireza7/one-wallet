@@ -1,5 +1,6 @@
 window.addEventListener('DOMContentLoaded', async () => {
   const tg = window.Telegram.WebApp;
+  window.__INIT_DATA = tg.initData;
 
   tg.expand(); // full screen
 

@@ -22,6 +22,7 @@ const API = {
     const res = await fetch('/api/wallet/check-deposit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData: window.__INIT_DATA })
     });
     return res.json();
   },
