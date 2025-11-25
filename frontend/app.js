@@ -2,6 +2,8 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+const initData = tg.initData;
+
 let currentUser = null;
 
 const loading = document.getElementById("loading");
@@ -38,9 +40,12 @@ async function init() {
   if (!u) return loading.innerText = "خطا: کاربر تلگرام یافت نشد";
 
   const res = await fetch("/api/user/init", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ telegram_id:u.id, username:u.username })
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData,
+    },
+    body: JSON.stringify({ username: u.username })
   });
 
   const data = await res.json();
@@ -97,12 +102,14 @@ document.getElementById("btnTransfer").onclick = async ()=>{
   const amt = Number(document.getElementById("amountTransfer").value);
 
   const res = await fetch("/api/wallet/transfer",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      from_telegram_id:currentUser.telegram_id,
-      to_username:toUser,
-      amount:amt
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData,
+    },
+    body: JSON.stringify({
+      to_username: toUser,
+      amount: amt
     })
   });
 
@@ -118,12 +125,14 @@ document.getElementById("btnWithdraw").onclick = async ()=>{
   const amt = Number(document.getElementById("amountWithdraw").value);
 
   const res = await fetch("/api/wallet/withdraw",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      telegram_id:currentUser.telegram_id,
-      to_address:addr,
-      amount:amt
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData,
+    },
+    body: JSON.stringify({
+      to_address: addr,
+      amount: amt
     })
   });
 
@@ -134,7 +143,9 @@ document.getElementById("btnWithdraw").onclick = async ()=>{
 
 async function refreshBalance(){
   if (!currentUser) return;
-  const res = await fetch("/api/wallet/me?telegram_id="+currentUser.telegram_id);
+  const res = await fetch("/api/wallet/me", {
+    headers: { "X-Telegram-Init-Data": initData }
+  });
   const data = await res.json();
   if (data.ok){
     currentUser = data.user;
@@ -147,7 +158,9 @@ async function loadHistory(){
   const box = document.getElementById("historyList");
   box.innerHTML = "<p class='text-slate-400 text-sm'>در حال بارگذاری...</p>";
 
-  const res = await fetch("/api/wallet/history?telegram_id="+currentUser.telegram_id);
+  const res = await fetch("/api/wallet/history", {
+    headers: { "X-Telegram-Init-Data": initData }
+  });
   const data = await res.json();
 
   if (!data.ok) return box.innerHTML="<p class='text-red-400'>خطا!</p>";

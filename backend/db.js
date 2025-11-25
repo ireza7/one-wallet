@@ -114,11 +114,11 @@ async function internalTransfer(fromUserId, toUserId, amount) {
     );
 
     await conn.query(
-      'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
+      'INSERT INTO wallet_ledger (user_id, type, amount, tx_hash, meta) VALUES (?, ?, ?, NULL, ?)',
       [fromUserId, 'internal_out', amount, JSON.stringify({ toUserId })]
     );
     await conn.query(
-      'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
+      'INSERT INTO wallet_ledger (user_id, type, amount, tx_hash, meta) VALUES (?, ?, ?, NULL, ?)',
       [toUserId, 'internal_in', amount, JSON.stringify({ fromUserId })]
     );
 
@@ -156,7 +156,7 @@ async function createWithdrawal(userId, amount, toAddress) {
     );
 
     await conn.query(
-      'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
+      'INSERT INTO wallet_ledger (user_id, type, amount, tx_hash, meta) VALUES (?, ?, ?, NULL, ?)',
       [userId, 'withdraw', amount, JSON.stringify({ toAddress })]
     );
 
@@ -170,13 +170,42 @@ async function createWithdrawal(userId, amount, toAddress) {
   }
 }
 
-async function markWithdrawalSent(id, txHash) {
-  await pool.query(
-    'UPDATE withdrawals SET status = ?, tx_hash = ? WHERE id = ?',
-    ['sent', txHash, id]
-  );
-}
 
+async function markWithdrawalSent(id, txHash) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    await conn.query(
+      'UPDATE withdrawals SET status = ?, tx_hash = ? WHERE id = ?',
+      ['sent', txHash, id]
+    );
+
+    // تلاش برای تنظیم tx_hash بر روی جدیدترین رکورد withdraw در ledger این کاربر
+    await conn.query(
+      `UPDATE wallet_ledger
+       SET tx_hash = ?
+       WHERE id = (
+         SELECT id FROM (
+           SELECT id FROM wallet_ledger
+           WHERE user_id = (SELECT user_id FROM withdrawals WHERE id = ?)
+             AND type = 'withdraw'
+             AND tx_hash IS NULL
+           ORDER BY id DESC
+           LIMIT 1
+         ) AS t
+       )`,
+      [txHash, id]
+    );
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
 async function markWithdrawalFailed(id, message) {
   await pool.query(
     'UPDATE withdrawals SET status = ?, error_message = ? WHERE id = ?',
