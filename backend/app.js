@@ -10,6 +10,9 @@ const { telegramAuthMiddleware } = require('./middleware/telegramAuth');
 const userRoutes = require('./routes/user');
 const walletRoutes = require('./routes/wallet');
 
+app.set('trust proxy', true);
+
+
 function createApp() {
   const app = express();
 
