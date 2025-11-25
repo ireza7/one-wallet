@@ -1,32 +1,17 @@
-const bip39 = require('bip39');
-const { hdkey } = require('@harmony-js/crypto');
-const { Harmony } = require('@harmony-js/core');
-const { ChainID, ChainType } = require('@harmony-js/utils');
-const { MASTER_MNEMONIC, HARMONY_RPC_URL } = require('../config/env');
-
-const hmy = new Harmony(HARMONY_RPC_URL, {
-  chainType: ChainType.Harmony,
-  chainId: ChainID.HmyMainnet
-});
-
-const seed = bip39.mnemonicToSeedSync(MASTER_MNEMONIC);
-const hdWallet = hdkey.fromMasterSeed(seed);
-
-function getPath(index) {
-  return `m/44'/1023'/0'/0/${index}`;
-}
+const bip39 = require("bip39");
+const { ethers } = require("ethers");
+const { MASTER_MNEMONIC } = require("../config/env");
 
 function deriveWallet(index) {
-  const path = getPath(index);
-  const child = hdWallet.derive(path);
-  const privateKey = child.privateKey.toString('hex');
-  const address = hmy.crypto.getAddressFromPrivateKey(privateKey);
-  return {
-    privateKey: '0x' + privateKey,
-    address: address.bech32
-  };
+    const path = `m/44'/1023'/0'/0/${index}`;
+    const seed = bip39.mnemonicToSeedSync(MASTER_MNEMONIC);
+    const hdNode = ethers.HDNodeWallet.fromSeed(seed);
+    const child = hdNode.derivePath(path);
+
+    return {
+        privateKey: child.privateKey,
+        address: ethers.encodeBech32Address("one", child.address)
+    };
 }
 
-module.exports = {
-  deriveWallet
-};
+module.exports = { deriveWallet };
