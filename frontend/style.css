@@ -1,0 +1,41 @@
+body {
+    direction: rtl;
+    font-family: sans-serif;
+    background: #f1f1f1;
+    padding: 20px;
+}
+
+#app {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+h2 {
+    margin-top: 0;
+}
+
+.action-block {
+    margin: 10px 0;
+}
+
+input {
+    padding: 6px;
+    width: 120px;
+    margin-left: 10px;
+}
+
+button {
+    padding: 6px 12px;
+    background: #0a84ff;
+    border: none;
+    color: white;
+    border-radius: 5px;
+}
+
+#log {
+    margin-top: 20px;
+    background: #eee;
+    padding: 10px;
+    font-size: 0.85rem;
+}
