@@ -25,6 +25,7 @@ const annotateLabelInput = document.getElementById('annotateLabel');
 const annotateNoteInput = document.getElementById('annotateNote');
 const annotateSaveBtn = document.getElementById('annotateSave');
 const annotateCancelBtn = document.getElementById('annotateCancel');
+const annotateCloseBtn = document.getElementById('annotateClose');
 
 let currentLedgerId = null;
 
@@ -258,9 +259,12 @@ function openAnnotateModal(ledgerId) {
   annotateModal.classList.remove('hidden');
 }
 
-annotateCancelBtn.onclick = () => {
+const closeAnnotateModal = () => {
   annotateModal.classList.add('hidden');
 };
+
+annotateCancelBtn.onclick = closeAnnotateModal;
+if (annotateCloseBtn) annotateCloseBtn.onclick = closeAnnotateModal;
 
 annotateSaveBtn.onclick = async () => {
   if (!currentLedgerId) return;

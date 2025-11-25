@@ -9,79 +9,146 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body dir="rtl">
-  <div id="loading" class="center-text">در حال ورود...</div>
+  <div id="loading" class="loading">در حال ورود...</div>
 
-  <div id="walletShell" class="hidden">
-    <div class="tabs">
+  <main id="walletShell" class="shell hidden">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">ONE Wallet</p>
+        <h1>کیف‌پول سبک و سریع</h1>
+        <p class="muted">مدیریت داخلی و روی زنجیره با یک رابط مدرن و مینیمال.</p>
+      </div>
+      <div class="hero-balance">
+        <p class="muted">موجودی داخلی</p>
+        <p id="balance" class="balance">0 ONE</p>
+        <button id="refreshBtn" class="ghost">به‌روزرسانی</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
       <button id="tabWallet" class="tab active">کیف‌پول</button>
       <button id="tabHistory" class="tab">تاریخچه</button>
       <button id="tabQR" class="tab">آدرس / QR</button>
       <button id="tabSettings" class="tab">تنظیمات</button>
-    </div>
+    </nav>
 
-    <div id="walletView" class="view">
-      <h2>کیف‌پول</h2>
-      <p>آدرس Harmony:</p>
-      <p id="address" class="mono"></p>
-      <button id="copyAddress">کپی آدرس</button>
+    <section id="walletView" class="view">
+      <div class="card grid two">
+        <div>
+          <p class="muted">آدرس Harmony</p>
+          <p id="address" class="mono addr"></p>
+        </div>
+        <div class="actions">
+          <button id="copyAddress" class="ghost">کپی آدرس</button>
+        </div>
+      </div>
 
-      <p>موجودی داخلی:</p>
-      <p id="balance" class="balance">0 ONE</p>
+      <div class="card">
+        <header class="card-header">
+          <div>
+            <p class="eyebrow">انتقال داخلی</p>
+            <h3>ارسال درون برنامه</h3>
+          </div>
+          <span class="badge">سریع</span>
+        </header>
+        <div class="form-grid">
+          <label class="field">
+            <span>username مقصد (بدون @)</span>
+            <input id="toUser" placeholder="example" />
+          </label>
+          <label class="field">
+            <span>مبلغ</span>
+            <input id="amountTransfer" placeholder="0" type="number" />
+          </label>
+        </div>
+        <button id="btnTransfer" class="primary full">انتقال</button>
+      </div>
 
-      <button id="refreshBtn">به‌روزرسانی موجودی</button>
+      <div class="card">
+        <header class="card-header">
+          <div>
+            <p class="eyebrow">برداشت روی زنجیره</p>
+            <h3>ارسال به آدرس Harmony</h3>
+          </div>
+          <span class="badge warning">on-chain</span>
+        </header>
+        <div class="form-grid">
+          <label class="field">
+            <span>آدرس one1... یا 0x...</span>
+            <input id="toAddress" placeholder="one1..." />
+          </label>
+          <label class="field">
+            <span>مبلغ</span>
+            <input id="amountWithdraw" placeholder="0" type="number" />
+          </label>
+        </div>
+        <button id="btnWithdraw" class="primary full">ثبت برداشت</button>
+      </div>
 
-      <hr />
-
-      <h3>انتقال داخلی</h3>
-      <input id="toUser" placeholder="username مقصد (بدون @)" />
-      <input id="amountTransfer" placeholder="مبلغ" type="number" />
-      <button id="btnTransfer">انتقال</button>
-
-      <h3>برداشت روی زنجیره</h3>
-      <input id="toAddress" placeholder="آدرس one1... یا 0x..." />
-      <input id="amountWithdraw" placeholder="مبلغ" type="number" />
-      <button id="btnWithdraw">ثبت برداشت</button>
+      <div class="card stack-sm">
+        <div class="inline">
+          <div>
+            <p class="eyebrow">واریز روی شبکه</p>
+            <p class="muted">در صورت واریز به این کیف‌پول، با این دکمه واریز جدید را بررسی می‌کنیم.</p>
+          </div>
+          <button id="btnCheckDeposit" class="ghost">بررسی واریز جدید</button>
+        </div>
+        <p id="depositStatus" class="message"></p>
+      </div>
 
       <p id="message" class="message"></p>
+    </section>
 
-      <h3>بررسی واریز روی شبکه</h3>
-      <p>در صورت واریز به این کیف‌پول، با این دکمه واریز جدید را بررسی می‌کنیم.</p>
-      <button id="btnCheckDeposit">بررسی واریز جدید</button>
-      <p id="depositStatus" class="message"></p>
+    <section id="historyView" class="view hidden">
+      <div class="card">
+        <header class="card-header">
+          <div>
+            <p class="eyebrow">تاریخچه</p>
+            <h3>تمام تراکنش‌ها</h3>
+          </div>
+          <span class="badge">آرشیو</span>
+        </header>
+        <div id="historyList" class="stack-sm"></div>
+      </div>
+    </section>
 
-    </div>
+    <section id="qrView" class="view hidden">
+      <div class="card align-center">
+        <p class="eyebrow">آدرس و QR</p>
+        <p id="qrAddress" class="mono addr"></p>
+        <canvas id="qrCanvas"></canvas>
+      </div>
+    </section>
 
-    <div id="historyView" class="view hidden">
-      <h2>تاریخچه</h2>
-      <div id="historyList"></div>
-    </div>
+    <section id="settingsView" class="view hidden">
+      <div class="card">
+        <p class="eyebrow">تنظیمات</p>
+        <h3>پیش‌فرض‌های ساده</h3>
+        <p class="muted">تنظیمات خاصی در این نسخه وجود ندارد.</p>
+      </div>
+    </section>
+  </main>
 
-    <div id="qrView" class="view hidden">
-      <h2>آدرس و QR</h2>
-      <p id="qrAddress" class="mono"></p>
-      <canvas id="qrCanvas"></canvas>
-    </div>
-
-    <div id="settingsView" class="view hidden">
-      <h2>تنظیمات</h2>
-      <p>تنظیمات خاصی در این نسخه وجود ندارد.</p>
-    </div>
-  </div>
-
-  <!-- Annotate Modal -->
   <div id="annotateModal" class="modal hidden">
     <div class="modal-inner">
-      <h3>ویرایش برچسب و توضیح</h3>
+      <header class="card-header">
+        <h3>ویرایش برچسب و توضیح</h3>
+        <button id="annotateClose" class="ghost small">✕</button>
+      </header>
 
-      <label>برچسب:</label>
-      <input id="annotateLabel" type="text" class="input" />
+      <label class="field">
+        <span>برچسب</span>
+        <input id="annotateLabel" type="text" class="input" />
+      </label>
 
-      <label>توضیح:</label>
-      <textarea id="annotateNote" class="textarea"></textarea>
+      <label class="field">
+        <span>توضیح</span>
+        <textarea id="annotateNote" class="textarea"></textarea>
+      </label>
 
       <div class="modal-actions">
-        <button id="annotateSave" class="btn">ذخیره</button>
-        <button id="annotateCancel" class="btn-secondary">انصراف</button>
+        <button id="annotateSave" class="primary">ذخیره</button>
+        <button id="annotateCancel" class="ghost">انصراف</button>
       </div>
     </div>
   </div>
