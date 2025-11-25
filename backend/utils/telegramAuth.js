@@ -34,7 +34,7 @@ function verifyTelegramWebAppData(initData, botToken) {
 
   // Secret key = HMAC-SHA256 of bot token
   const secretKey = crypto
-    .createHash('sha256')
+    .createHmac('sha256', 'WebAppData')
     .update(botToken)
     .digest();
 
