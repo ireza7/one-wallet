@@ -15,7 +15,10 @@ function parseAmount(amount) {
 }
 
 function getUserFromInitData(req) {
-  const initData = req.body.initData;
+  const initData =
+    req.headers['x-telegram-init-data'] ||
+    req.body.initData ||
+    req.query.initData;
   if (!initData) {
     const err = new Error('initData لازم است');
     err.statusCode = 401;

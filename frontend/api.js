@@ -3,6 +3,11 @@ const authHeaders = () => ({
   'X-Telegram-Init-Data': window.__INIT_DATA || ''
 });
 
+const withInitData = (payload = {}) => ({
+  initData: window.__INIT_DATA,
+  ...payload,
+});
+
 const API = {
   async authWithTelegram(initData) {
     const res = await fetch('/api/user/auth', {
@@ -14,7 +19,10 @@ const API = {
   },
 
   async me() {
-    const res = await fetch('/api/wallet/me', { headers: authHeaders() });
+    const qs = window.__INIT_DATA
+      ? `?initData=${encodeURIComponent(window.__INIT_DATA)}`
+      : '';
+    const res = await fetch(`/api/wallet/me${qs}`, { headers: authHeaders() });
     return res.json();
   },
 
@@ -22,7 +30,7 @@ const API = {
     const res = await fetch('/api/wallet/transfer', {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ to_username: toUsername, amount }),
+      body: JSON.stringify(withInitData({ to_username: toUsername, amount })),
     });
     return res.json();
   },
@@ -31,13 +39,16 @@ const API = {
     const res = await fetch('/api/wallet/withdraw', {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ to_address: toAddress, amount }),
+      body: JSON.stringify(withInitData({ to_address: toAddress, amount })),
     });
     return res.json();
   },
 
   async history() {
-    const res = await fetch('/api/wallet/history', { headers: authHeaders() });
+    const qs = window.__INIT_DATA
+      ? `?initData=${encodeURIComponent(window.__INIT_DATA)}`
+      : '';
+    const res = await fetch(`/api/wallet/history${qs}`, { headers: authHeaders() });
     return res.json();
   },
 
@@ -45,7 +56,7 @@ const API = {
     const res = await fetch('/api/wallet/annotate', {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ ledger_id: ledgerId, label, note }),
+      body: JSON.stringify(withInitData({ ledger_id: ledgerId, label, note })),
     });
     return res.json();
   },
@@ -55,7 +66,7 @@ const API = {
     const res = await fetch('/api/wallet/check-deposit', {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ initData: window.__INIT_DATA })
+      body: JSON.stringify(withInitData())
     });
     return res.json();
   },
