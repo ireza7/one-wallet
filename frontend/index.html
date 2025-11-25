@@ -1,132 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa">
 <head>
   <meta charset="UTF-8" />
+  <title>ONE Wallet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OneWallet MiniApp</title>
   <link rel="stylesheet" href="./style.css" />
-
-  <!-- Telegram WebApp JS -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- Ethers.js (if needed by backend scripts injected here) -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
-<body>
-  <div id="app" class="app-shell">
-    <header class="app-header">
-      <div class="brand">
-        <div class="brand-icon">₿</div>
-        <div class="brand-text">
-          <div class="brand-title">OneWallet</div>
-          <div class="brand-subtitle">Harmony Light Wallet</div>
-        </div>
+<body dir="rtl">
+  <div id="loading" class="center-text">در حال ورود...</div>
+
+  <div id="walletShell" class="hidden">
+    <div class="tabs">
+      <button id="tabWallet" class="tab active">کیف‌پول</button>
+      <button id="tabHistory" class="tab">تاریخچه</button>
+      <button id="tabQR" class="tab">آدرس / QR</button>
+      <button id="tabSettings" class="tab">تنظیمات</button>
+    </div>
+
+    <div id="walletView" class="view">
+      <h2>کیف‌پول</h2>
+      <p>آدرس Harmony:</p>
+      <p id="address" class="mono"></p>
+      <button id="copyAddress">کپی آدرس</button>
+
+      <p>موجودی داخلی:</p>
+      <p id="balance" class="balance">0 ONE</p>
+
+      <button id="refreshBtn">به‌روزرسانی موجودی</button>
+
+      <hr />
+
+      <h3>انتقال داخلی</h3>
+      <input id="toUser" placeholder="username مقصد (بدون @)" />
+      <input id="amountTransfer" placeholder="مبلغ" type="number" />
+      <button id="btnTransfer">انتقال</button>
+
+      <h3>برداشت روی زنجیره</h3>
+      <input id="toAddress" placeholder="آدرس one1... یا 0x..." />
+      <input id="amountWithdraw" placeholder="مبلغ" type="number" />
+      <button id="btnWithdraw">ثبت برداشت</button>
+
+      <p id="message" class="message"></p>
+
+      <h3>بررسی واریز روی شبکه</h3>
+      <p>در صورت واریز به این کیف‌پول، با این دکمه واریز جدید را بررسی می‌کنیم.</p>
+      <button id="btnCheckDeposit">بررسی واریز جدید</button>
+      <p id="depositStatus" class="message"></p>
+
+    </div>
+
+    <div id="historyView" class="view hidden">
+      <h2>تاریخچه</h2>
+      <div id="historyList"></div>
+    </div>
+
+    <div id="qrView" class="view hidden">
+      <h2>آدرس و QR</h2>
+      <p id="qrAddress" class="mono"></p>
+      <canvas id="qrCanvas"></canvas>
+    </div>
+
+    <div id="settingsView" class="view hidden">
+      <h2>تنظیمات</h2>
+      <p>تنظیمات خاصی در این نسخه وجود ندارد.</p>
+    </div>
+  </div>
+
+  <!-- Annotate Modal -->
+  <div id="annotateModal" class="modal hidden">
+    <div class="modal-inner">
+      <h3>ویرایش برچسب و توضیح</h3>
+
+      <label>برچسب:</label>
+      <input id="annotateLabel" type="text" class="input" />
+
+      <label>توضیح:</label>
+      <textarea id="annotateNote" class="textarea"></textarea>
+
+      <div class="modal-actions">
+        <button id="annotateSave" class="btn">ذخیره</button>
+        <button id="annotateCancel" class="btn-secondary">انصراف</button>
       </div>
-    </header>
-
-    <main class="app-main">
-      <div id="loading" class="status-banner">
-        در حال برقراری اتصال به تلگرام...
-      </div>
-
-      <section id="user-info" class="card user-card" style="display:none;">
-        <div class="card-header">
-          <span>مشخصات کاربر</span>
-        </div>
-        <div class="card-body user-body">
-          <div class="user-avatar">
-            <span class="avatar-circle">TG</span>
-          </div>
-          <div class="user-meta">
-            <div class="user-name">
-              <span>@</span><span id="tg-username">-</span>
-            </div>
-            <div class="user-id">
-              <span class="label">Telegram ID:</span>
-              <span id="tg-id">-</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="wallet-info" class="card wallet-card" style="display:none;">
-        <div class="card-header">
-          <span>کیف پول هارمونی</span>
-        </div>
-        <div class="card-body wallet-body">
-          <div class="wallet-row">
-            <span class="label">آدرس کیف پول</span>
-            <div class="wallet-address" id="wallet-address">-</div>
-          </div>
-          <div class="wallet-row wallet-balance-row">
-            <div class="label">موجودی داخلی</div>
-            <div class="balance-value">
-              <span id="internal-balance">0</span>
-              <span class="currency">ONE</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="actions" class="card actions-card" style="display:none;">
-        <div class="card-header">
-          <span>عملیات کیف پول</span>
-        </div>
-        <div class="card-body actions-body">
-          <div class="action-group">
-            <div class="group-header">
-              <span>برداشت از موجودی داخلی</span>
-            </div>
-            <div class="group-body">
-              <div class="field">
-                <label for="withdraw-amount">مبلغ برداشت (ONE)</label>
-                <input
-                  id="withdraw-amount"
-                  type="number"
-                  min="0"
-                  step="0.000001"
-                  placeholder="مثلاً 1.5"
-                />
-              </div>
-              <button class="btn primary" onclick="withdraw()">
-                برداشت
-              </button>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="action-group">
-            <div class="group-header">
-              <span>بررسی واریز روی شبکه + سوییپ به هات‌ولت</span>
-            </div>
-            <div class="group-body">
-              <p class="hint">
-                پس از انتقال ONE به آدرس کیف پول بالا، این دکمه را بزنید تا
-                واریز جدید شناسایی شود و به صورت خودکار به هات‌ولت منتقل گردد.
-              </p>
-              <button class="btn secondary" onclick="checkDeposit()">
-                بررسی واریز جدید
-              </button>
-              <div id="deposit-result" class="status-text"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="card log-card">
-        <div class="card-header">
-          <span>گزارش سیستم</span>
-        </div>
-        <div class="card-body">
-          <div id="log" class="log-console"></div>
-        </div>
-      </section>
-    </main>
+    </div>
   </div>
 
   <script src="./api.js"></script>
-  <script src="./wallet.js"></script>
+  <script src="./app.js"></script>
   <script src="./main.js"></script>
 </body>
 </html>

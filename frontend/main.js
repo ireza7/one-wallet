@@ -1,8 +1,7 @@
 window.addEventListener('DOMContentLoaded', async () => {
   const tg = window.Telegram.WebApp;
-  window.__INIT_DATA = tg.initData;
 
-  tg.expand(); // full screen
+  tg.expand();
 
   const initData = tg.initData;
 
@@ -11,6 +10,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       'خطا: این وب‌اپ باید داخل Telegram WebApp باز شود.';
     return;
   }
+
+  window.__INIT_DATA = initData;
 
   document.getElementById('loading').textContent = 'در حال ورود...';
 
@@ -23,8 +24,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    updateUI(res.user);
-
+    // user ساخته شد / وجود دارد
+    await window.initApp();
   } catch (err) {
     document.getElementById('loading').textContent =
       'خطا در اتصال به سرور';
