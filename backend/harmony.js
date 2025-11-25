@@ -1,46 +1,66 @@
-
-const { Web3 } = require('web3');
+const Web3 = require('web3');
+const { fromBech32, toChecksumAddress } = require('@harmony-js/crypto');
 const config = require('./config');
-const { hexToBech32, bech32ToHex } = require('./utils/harmonyAddress');
 
-const web3 = new Web3(config.harmony.rpcUrl);
+const web3 = new Web3(new Web3.providers.HttpProvider(config.harmony.rpcUrl));
 
-async function generateUserWallet() {
-  const account = web3.eth.accounts.create();
-  const hexAddress = account.address.toLowerCase();
-  const bech32Address = hexToBech32(hexAddress);
-
-  return {
-    address: bech32Address,
-    hexAddress: hexAddress,
-    privateKey: account.privateKey,
-  };
-}
-
-// convert any Harmony format to hex (0x...)
+/**
+ * تبدیل آدرس Harmony به hex
+ * ورودی می‌تواند bech32 (one1..) یا hex (0x..) باشد
+ */
 function normalizeToHex(address) {
-  if (!address) throw new Error('empty address');
-  const lower = address.trim().toLowerCase();
-  if (lower.startsWith('0x')) return lower;
-  if (lower.startsWith('one1')) return bech32ToHex(lower);
-  throw new Error('unsupported address format');
-}
-
-async function sendFromHotWallet(toAddressInput, amountOne) {
-  if (!config.harmony.hotWalletPrivateKey || !config.harmony.hotWalletAddress) {
-    throw new Error('هات ولت تنظیم نشده است');
+  if (!address) {
+    throw new Error('آدرس نامعتبر است');
   }
 
+  const addr = address.trim();
+
+  // اگر آدرس با 0x شروع می‌شود، همان را برمی‌گردانیم
+  if (addr.startsWith('0x')) {
+    return toChecksumAddress(addr);
+  }
+
+  // اگر فرمت Harmony باشد → تبدیل به 0x
+  if (addr.startsWith('one1')) {
+    try {
+      const hex = fromBech32(addr);
+      return toChecksumAddress(hex);
+    } catch (err) {
+      throw new Error(`تبدیل آدرس bech32 به hex ناموفق بود: ${err.message}`);
+    }
+  }
+
+  throw new Error(`فرمت آدرس قابل تشخیص نیست: ${address}`);
+}
+
+/**
+ * تبدیل ایمن آدرس هات‌ولت
+ * تضمین می‌کند همیشه به hex تبدیل شود
+ */
+function getHotWalletHex() {
+  if (!config.harmony.hotWalletAddress) {
+    throw new Error('هات‌ولت تنظیم نشده است (HOT_WALLET_ADDRESS)');
+  }
+  return normalizeToHex(config.harmony.hotWalletAddress);
+}
+
+/**
+ * ارسال از هات‌ولت به یک آدرس دیگر
+ */
+async function sendFromHotWallet(toAddressInput, amountOne) {
+  if (!config.harmony.hotWalletPrivateKey) {
+    throw new Error('کلید خصوصی هات‌ولت تنظیم نشده است');
+  }
+
+  const hotHex = getHotWalletHex();
   const toHex = normalizeToHex(toAddressInput);
+
   const amountWei = web3.utils.toWei(amountOne.toString(), 'ether');
   const gasPrice = await web3.eth.getGasPrice();
-  const nonce = await web3.eth.getTransactionCount(
-    config.harmony.hotWalletAddress,
-    'pending'
-  );
+  const nonce = await web3.eth.getTransactionCount(hotHex, 'pending');
 
   const tx = {
-    from: config.harmony.hotWalletAddress,
+    from: hotHex,
     to: toHex,
     value: amountWei,
     gas: 21000,
@@ -49,32 +69,29 @@ async function sendFromHotWallet(toAddressInput, amountOne) {
     chainId: config.harmony.chainId,
   };
 
-  const signed = await web3.eth.accounts.signTransaction(
+  const signedTx = await web3.eth.accounts.signTransaction(
     tx,
     config.harmony.hotWalletPrivateKey
   );
 
-  const receipt = await web3.eth.sendSignedTransaction(
-    signed.rawTransaction
-  );
-
+  const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
   return receipt.transactionHash;
 }
 
-// fromAddress می‌تواند one1... یا 0x... باشد
+/**
+ * Sweep (انتقال از کیف کاربر به هات‌ولت)
+ */
 async function sweepToHotWallet(fromAddress, privateKey, amountOne) {
-  if (!config.harmony.hotWalletAddress) {
-    throw new Error('هات ولت تنظیم نشده است');
-  }
-
+  const hotHex = getHotWalletHex();
   const fromHex = normalizeToHex(fromAddress);
+
   const amountWei = web3.utils.toWei(amountOne.toString(), 'ether');
   const gasPrice = await web3.eth.getGasPrice();
   const nonce = await web3.eth.getTransactionCount(fromHex, 'pending');
 
   const tx = {
     from: fromHex,
-    to: config.harmony.hotWalletAddress,
+    to: hotHex,
     value: amountWei,
     gas: 21000,
     gasPrice,
@@ -82,22 +99,28 @@ async function sweepToHotWallet(fromAddress, privateKey, amountOne) {
     chainId: config.harmony.chainId,
   };
 
-  const signed = await web3.eth.accounts.signTransaction(
+  const signedTx = await web3.eth.accounts.signTransaction(
     tx,
     privateKey
   );
 
-  const receipt = await web3.eth.sendSignedTransaction(
-    signed.rawTransaction
-  );
-
+  const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
   return receipt.transactionHash;
 }
 
+/**
+ * دریافت موجودی (hex یا bech32)
+ */
+async function getBalance(address) {
+  const hex = normalizeToHex(address);
+  const balanceWei = await web3.eth.getBalance(hex);
+  return web3.utils.fromWei(balanceWei, 'ether');
+}
+
 module.exports = {
-  web3,
-  generateUserWallet,
-  sendFromHotWallet,
-  sweepToHotWallet,
   normalizeToHex,
+  getHotWalletHex,
+  sweepToHotWallet,
+  sendFromHotWallet,
+  getBalance,
 };
