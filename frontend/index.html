@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OneWallet MiniApp</title>
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Telegram WebApp JS -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Ethers.js (if needed by backend scripts injected here) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">₿</div>
+        <div class="brand-text">
+          <div class="brand-title">OneWallet</div>
+          <div class="brand-subtitle">Harmony Light Wallet</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div id="loading" class="status-banner">
+        در حال برقراری اتصال به تلگرام...
+      </div>
+
+      <section id="user-info" class="card user-card" style="display:none;">
+        <div class="card-header">
+          <span>مشخصات کاربر</span>
+        </div>
+        <div class="card-body user-body">
+          <div class="user-avatar">
+            <span class="avatar-circle">TG</span>
+          </div>
+          <div class="user-meta">
+            <div class="user-name">
+              <span>@</span><span id="tg-username">-</span>
+            </div>
+            <div class="user-id">
+              <span class="label">Telegram ID:</span>
+              <span id="tg-id">-</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="wallet-info" class="card wallet-card" style="display:none;">
+        <div class="card-header">
+          <span>کیف پول هارمونی</span>
+        </div>
+        <div class="card-body wallet-body">
+          <div class="wallet-row">
+            <span class="label">آدرس کیف پول</span>
+            <div class="wallet-address" id="wallet-address">-</div>
+          </div>
+          <div class="wallet-row wallet-balance-row">
+            <div class="label">موجودی داخلی</div>
+            <div class="balance-value">
+              <span id="internal-balance">0</span>
+              <span class="currency">ONE</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="actions" class="card actions-card" style="display:none;">
+        <div class="card-header">
+          <span>عملیات کیف پول</span>
+        </div>
+        <div class="card-body actions-body">
+          <div class="action-group">
+            <div class="group-header">
+              <span>برداشت از موجودی داخلی</span>
+            </div>
+            <div class="group-body">
+              <div class="field">
+                <label for="withdraw-amount">مبلغ برداشت (ONE)</label>
+                <input
+                  id="withdraw-amount"
+                  type="number"
+                  min="0"
+                  step="0.000001"
+                  placeholder="مثلاً 1.5"
+                />
+              </div>
+              <button class="btn primary" onclick="withdraw()">
+                برداشت
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="action-group">
+            <div class="group-header">
+              <span>بررسی واریز روی شبکه + سوییپ به هات‌ولت</span>
+            </div>
+            <div class="group-body">
+              <p class="hint">
+                پس از انتقال ONE به آدرس کیف پول بالا، این دکمه را بزنید تا
+                واریز جدید شناسایی شود و به صورت خودکار به هات‌ولت منتقل گردد.
+              </p>
+              <button class="btn secondary" onclick="checkDeposit()">
+                بررسی واریز جدید
+              </button>
+              <div id="deposit-result" class="status-text"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card log-card">
+        <div class="card-header">
+          <span>گزارش سیستم</span>
+        </div>
+        <div class="card-body">
+          <div id="log" class="log-console"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./api.js"></script>
+  <script src="./wallet.js"></script>
+  <script src="./main.js"></script>
+</body>
+</html>
