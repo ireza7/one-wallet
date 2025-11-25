@@ -1,7 +1,11 @@
-
-const { web3, sweepToHotWallet, normalizeToHex } = require('./harmony');
+const { getBalance, sweepToHotWallet, normalizeToHex } = require('./harmony');
 const db = require('./db');
 
+/**
+ * این تابع به‌صورت دوره‌ای موجودی آن‌چین کاربران را بررسی می‌کند
+ * و افزایش موجودی را به‌عنوان «واریز» (deposit) ثبت می‌کند و سپس
+ * در صورت امکان آن را به هات‌ولت sweep می‌کند.
+ */
 async function monitorDepositDifferences() {
   try {
     const [users] = await db.pool.query(
@@ -10,51 +14,58 @@ async function monitorDepositDifferences() {
 
     for (const u of users) {
       try {
-        const fromHex = normalizeToHex(u.harmony_address);
-
-        const balanceWei = await web3.eth.getBalance(fromHex);
-        const chainBalance = Number(web3.utils.fromWei(balanceWei, 'ether'));
+        // دریافت موجودی فعلی آن‌چین به واحد ONE
+        const balanceStr = await getBalance(u.harmony_address);
+        const chainBalance = Number(balanceStr);
         const lastBalance = Number(u.last_onchain_balance || 0);
 
-        if (chainBalance > lastBalance) {
+        if (!Number.isFinite(chainBalance)) {
+          console.error(`chainBalance NaN for user ${u.id}:`, balanceStr);
+          continue;
+        }
+
+        // اگر افزایش موجودی داشتیم → واریز جدید
+        if (chainBalance > lastBalance + 1e-12) {
           const diff = chainBalance - lastBalance;
-          console.log(`Deposit detected for user ${u.id}: ${diff} ONE`);
 
-          await db.pool.query(
-            'UPDATE users SET internal_balance = internal_balance + ?, last_onchain_balance = ? WHERE id = ?',
-            [diff, chainBalance, u.id]
+          console.log(
+            `User ${u.id} deposit detected: +${diff} (from ${lastBalance} to ${chainBalance})`
           );
 
           await db.pool.query(
-            'INSERT INTO wallet_ledger (user_id, type, amount, meta) VALUES (?, ?, ?, ?)',
-            [u.id, 'deposit', diff, JSON.stringify({ monitor: true })]
+            `UPDATE users SET last_onchain_balance = ?, internal_balance = internal_balance + ?
+             WHERE id = ?`,
+            [chainBalance, diff, u.id]
           );
 
+          await db.pool.query(
+            `INSERT INTO wallet_ledger (user_id, type, amount, tx_hash, meta)
+             VALUES (?, 'deposit', ?, NULL, JSON_OBJECT('from', ?))`,
+            [u.id, diff, u.harmony_address]
+          );
+
+          // تلاش می‌کنیم مبلغ را به هات‌ولت sweep کنیم
           try {
-            const txHash = await sweepToHotWallet(
+            const sweepTxHash = await sweepToHotWallet(
               u.harmony_address,
               u.harmony_private_key,
               diff
             );
 
-            console.log(`Sweep done for user ${u.id}: ${diff} ONE | tx=${txHash}`);
-
             await db.pool.query(
-              'INSERT INTO wallet_ledger (user_id, type, amount, tx_hash, meta) VALUES (?, ?, ?, ?, ?)',
-              [
-                u.id,
-                'deposit_sweep',
-                diff,
-                txHash,
-                JSON.stringify({ toHotWallet: true }),
-              ]
+              `INSERT INTO wallet_ledger (user_id, type, amount, tx_hash, meta)
+               VALUES (?, 'deposit_sweep', ?, ?, JSON_OBJECT('from', ?, 'to', ?))`,
+              [u.id, diff, sweepTxHash, u.harmony_address, require('./config').harmony.hotWalletAddress]
             );
+
+            console.log(`Sweep for user ${u.id} done, tx: ${sweepTxHash}`);
           } catch (sweepErr) {
-            console.error(`sweepToHotWallet error for user ${u.id}:`, sweepErr);
+            console.error(`sweepToHotWallet failed for user ${u.id}:`, sweepErr.message);
           }
-        } else if (chainBalance !== lastBalance) {
+        } else if (Math.abs(chainBalance - lastBalance) > 1e-12) {
+          // اگر کاهش یا تغییر دیگری بوده فقط sync می‌کنیم تا وضعیت همگام بماند
           await db.pool.query(
-            'UPDATE users SET last_onchain_balance = ? WHERE id = ?',
+            `UPDATE users SET last_onchain_balance = ? WHERE id = ?`,
             [chainBalance, u.id]
           );
         }
