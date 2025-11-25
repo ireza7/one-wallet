@@ -2,28 +2,62 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8" />
-  <title>ONE Wallet</title>
+  <title>ONE Exchange Wallet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="./style.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body dir="rtl">
-  <div id="loading" class="loading">در حال ورود...</div>
+  <div id="loading" class="loading card-surface">در حال آماده‌سازی محیط تبادل...</div>
 
   <main id="walletShell" class="shell hidden">
-    <header class="hero">
-      <div>
-        <p class="eyebrow">ONE Wallet</p>
-        <h1>کیف‌پول سبک و سریع</h1>
-        <p class="muted">مدیریت داخلی و روی زنجیره با یک رابط مدرن و مینیمال.</p>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-spark">ONE</div>
+        <div>
+          <p class="eyebrow">ONE Exchange Desk</p>
+          <h1>کیف‌پول پیشرفته برای معاملات سریع</h1>
+          <p class="muted">رابطی مدرن برای مدیریت داخلی، برداشت آن‌چین و اسکن فوری QR.</p>
+        </div>
       </div>
-      <div class="hero-balance">
-        <p class="muted">موجودی داخلی</p>
-        <p id="balance" class="balance">0 ONE</p>
-        <button id="refreshBtn" class="ghost">به‌روزرسانی</button>
+      <div class="top-actions">
+        <span class="pill success">حالت امن فعال</span>
+        <button id="refreshBtn" class="ghost">به‌روزرسانی لحظه‌ای</button>
       </div>
     </header>
+
+    <section class="stat-grid">
+      <article class="stat-card">
+        <div>
+          <p class="eyebrow">موجودی داخلی</p>
+          <p id="balance" class="balance">0 ONE</p>
+          <p class="muted">قابل انتقال فوری به کاربران دیگر</p>
+        </div>
+        <div class="chip">لحظه‌ای</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-row">
+          <div>
+            <p class="eyebrow">آدرس Harmony</p>
+            <p id="address" class="mono addr"></p>
+          </div>
+          <button id="copyAddress" class="ghost icon">کپی</button>
+        </div>
+        <p class="muted">ارسال روی شبکه mainnet • hex و bech32</p>
+      </article>
+      <article class="stat-card compact">
+        <p class="eyebrow">وضعیت شبکه</p>
+        <div class="status-row">
+          <span class="dot live"></span>
+          <span>Harmony Mainnet</span>
+        </div>
+        <div class="status-row small">
+          <span class="muted">حداقل برداشت</span>
+          <strong>1 ONE</strong>
+        </div>
+      </article>
+    </section>
 
     <nav class="tabs">
       <button id="tabWallet" class="tab active">کیف‌پول</button>
@@ -33,98 +67,122 @@
     </nav>
 
     <section id="walletView" class="view">
-      <div class="card grid two">
-        <div>
-          <p class="muted">آدرس Harmony</p>
-          <p id="address" class="mono addr"></p>
-        </div>
-        <div class="actions">
-          <button id="copyAddress" class="ghost">کپی آدرس</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <header class="card-header">
-          <div>
-            <p class="eyebrow">انتقال داخلی</p>
-            <h3>ارسال درون برنامه</h3>
+      <div class="panel-grid">
+        <article class="card glass">
+          <header class="card-header">
+            <div>
+              <p class="eyebrow">انتقال داخلی</p>
+              <h3>ارسال سریع به username</h3>
+            </div>
+            <span class="pill">بدون کارمزد</span>
+          </header>
+          <div class="form-grid">
+            <label class="field">
+              <span>username مقصد (بدون @)</span>
+              <input id="toUser" placeholder="example" />
+            </label>
+            <label class="field">
+              <span>مبلغ</span>
+              <input id="amountTransfer" placeholder="0" type="number" />
+            </label>
           </div>
-          <span class="badge">سریع</span>
-        </header>
-        <div class="form-grid">
-          <label class="field">
-            <span>username مقصد (بدون @)</span>
-            <input id="toUser" placeholder="example" />
-          </label>
-          <label class="field">
-            <span>مبلغ</span>
-            <input id="amountTransfer" placeholder="0" type="number" />
-          </label>
-        </div>
-        <button id="btnTransfer" class="primary full">انتقال</button>
-      </div>
+          <button id="btnTransfer" class="primary full">ارسال داخلی</button>
+        </article>
 
-      <div class="card">
-        <header class="card-header">
-          <div>
-            <p class="eyebrow">برداشت روی زنجیره</p>
-            <h3>ارسال به آدرس Harmony</h3>
+        <article class="card glass">
+          <header class="card-header">
+            <div>
+              <p class="eyebrow">برداشت روی زنجیره</p>
+              <h3>ارسال به آدرس Harmony</h3>
+            </div>
+            <span class="pill warning">On-chain</span>
+          </header>
+          <div class="form-grid">
+            <label class="field">
+              <span>آدرس one1... یا 0x...</span>
+              <input id="toAddress" placeholder="one1..." />
+            </label>
+            <label class="field">
+              <span>مبلغ</span>
+              <input id="amountWithdraw" placeholder="0" type="number" />
+            </label>
           </div>
-          <span class="badge warning">on-chain</span>
-        </header>
-        <div class="form-grid">
-          <label class="field">
-            <span>آدرس one1... یا 0x...</span>
-            <input id="toAddress" placeholder="one1..." />
-          </label>
-          <label class="field">
-            <span>مبلغ</span>
-            <input id="amountWithdraw" placeholder="0" type="number" />
-          </label>
-        </div>
-        <button id="btnWithdraw" class="primary full">ثبت برداشت</button>
+          <button id="btnWithdraw" class="primary full">ثبت برداشت</button>
+        </article>
       </div>
 
-      <div class="card stack-sm">
+      <article class="card stack-sm glass soft">
         <div class="inline">
           <div>
             <p class="eyebrow">واریز روی شبکه</p>
-            <p class="muted">در صورت واریز به این کیف‌پول، با این دکمه واریز جدید را بررسی می‌کنیم.</p>
+            <p class="muted">پس از انتقال ONE به آدرس بالا، این دکمه واریز جدید را شناسایی و به موجودی داخلی اضافه می‌کند.</p>
           </div>
           <button id="btnCheckDeposit" class="ghost">بررسی واریز جدید</button>
         </div>
         <p id="depositStatus" class="message"></p>
-      </div>
+      </article>
 
-      <p id="message" class="message"></p>
+      <article class="card highlight">
+        <div class="ticker">
+          <div>
+            <p class="eyebrow">هشدارهای وضعیت</p>
+            <p id="message" class="message"></p>
+          </div>
+          <div class="ticker-glow"></div>
+        </div>
+      </article>
     </section>
 
     <section id="historyView" class="view hidden">
-      <div class="card">
+      <div class="card glass">
         <header class="card-header">
           <div>
-            <p class="eyebrow">تاریخچه</p>
-            <h3>تمام تراکنش‌ها</h3>
+            <p class="eyebrow">تاریخچه تراکنش</p>
+            <h3>تمام رویدادهای مالی</h3>
           </div>
-          <span class="badge">آرشیو</span>
+          <span class="pill">Ledger</span>
         </header>
-        <div id="historyList" class="stack-sm"></div>
+        <div id="historyList" class="stack-sm history-list"></div>
       </div>
     </section>
 
     <section id="qrView" class="view hidden">
-      <div class="card align-center">
+      <div class="card glass align-center">
         <p class="eyebrow">آدرس و QR</p>
+        <p class="muted">برای دریافت سریع، QR را با موبایل یا اسکنر صرافی بخوانید.</p>
         <p id="qrAddress" class="mono addr"></p>
         <canvas id="qrCanvas"></canvas>
+        <div class="qr-footnote">آدرس فعلی به‌صورت هم‌زمان bech32 و hex پشتیبانی می‌شود.</div>
       </div>
     </section>
 
     <section id="settingsView" class="view hidden">
-      <div class="card">
+      <div class="card glass">
         <p class="eyebrow">تنظیمات</p>
-        <h3>پیش‌فرض‌های ساده</h3>
-        <p class="muted">تنظیمات خاصی در این نسخه وجود ندارد.</p>
+        <h3>پروفایل و امنیت</h3>
+        <ul class="settings-list">
+          <li>
+            <div>
+              <strong>نوتیفیکیشن داخل اپ</strong>
+              <p class="muted">اعلان‌های لحظه‌ای هنگام واریز یا برداشت</p>
+            </div>
+            <span class="pill">فعال</span>
+          </li>
+          <li>
+            <div>
+              <strong>حالت تیره</strong>
+              <p class="muted">مناسب برای معامله در شب</p>
+            </div>
+            <span class="pill success">پیش‌فرض</span>
+          </li>
+          <li>
+            <div>
+              <strong>حفاظت نشست</strong>
+              <p class="muted">وابسته به initData امضاشده Telegram</p>
+            </div>
+            <span class="pill">فعال</span>
+          </li>
+        </ul>
       </div>
     </section>
   </main>
@@ -132,7 +190,10 @@
   <div id="annotateModal" class="modal hidden">
     <div class="modal-inner">
       <header class="card-header">
-        <h3>ویرایش برچسب و توضیح</h3>
+        <div>
+          <p class="eyebrow">ویرایش جزئیات</p>
+          <h3>برچسب و توضیح تراکنش</h3>
+        </div>
         <button id="annotateClose" class="ghost small">✕</button>
       </header>
 
