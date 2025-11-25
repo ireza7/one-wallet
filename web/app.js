@@ -1,64 +1,44 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
+const tg=window.Telegram.WebApp;tg.expand();
+const loader=document.getElementById("loader-overlay");
+const statusEl=document.getElementById("loader-status");
+const errorEl=document.getElementById("loader-error");
 
-const telegramData = tg.initDataUnsafe;
+function setStatus(t){statusEl.innerText=t;}
+function showError(t){errorEl.innerText=t;}
+function hideLoader(){loader.classList.add("fade-out");setTimeout(()=>loader.style.display="none",600);}
 
-async function api(path, body) {
-  const res = await fetch('/api' + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ telegramData, ...body })
-  });
-  return res.json();
+async function callAPI(p,b){
+ const r=await fetch("/api"+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+ return await r.json();
 }
 
-async function init() {
-  try {
-    const data = await api('/init', {});
-    if (!data.ok) throw new Error(data.error || 'init failed');
-
-    document.getElementById('deposit-info').innerHTML =
-      'آدرس واریز شما:<br><code>' + data.user.deposit_address + '</code>';
-  } catch (err) {
-    alert('خطا در init: ' + err.message);
-  }
+async function initApp(){
+ setStatus("در حال شناسایی کاربر...");
+ const tgData=tg.initDataUnsafe;
+ if(!tgData||!tgData.user){showError("initData دریافت نشد");return;}
+ setStatus("در حال ورود...");
+ const d=await callAPI("/init",{telegramData:tgData});
+ if(!d.ok){showError(d.error);return;}
+ document.getElementById("deposit-info").innerHTML="آدرس:<br><code>"+d.user.deposit_address+"</code>";
+ hideLoader();
 }
 
-async function checkDeposit() {
-  try {
-    const data = await api('/check-deposit', {});
-    if (!data.ok) throw new Error(data.error || 'error');
-    alert(data.message);
-  } catch (err) {
-    alert('خطا در بررسی واریز: ' + err.message);
-  }
+async function checkDeposit(){
+ const tgData=tg.initDataUnsafe;
+ const d=await callAPI("/check-deposit",{telegramData:tgData});
+ alert(d.message||"ok");
+}
+async function showBalance(){
+ const tgData=tg.initDataUnsafe;
+ const d=await callAPI("/balance",{telegramData:tgData});
+ alert("Balance: "+d.balance);
+}
+async function withdraw(){
+ const tgData=tg.initDataUnsafe;
+ const a=document.getElementById("withdrawAddress").value;
+ const m=document.getElementById("withdrawAmount").value;
+ const d=await callAPI("/withdraw",{telegramData:tgData,address:a,amount:m});
+ alert("done");
 }
 
-async function showBalance() {
-  try {
-    const data = await api('/balance', {});
-    if (!data.ok) throw new Error(data.error || 'error');
-    alert('موجودی شما: ' + data.balance + ' ONE');
-  } catch (err) {
-    alert('خطا در دریافت موجودی: ' + err.message);
-  }
-}
-
-async function withdraw() {
-  const address = document.getElementById('withdrawAddress').value.trim();
-  const amount = document.getElementById('withdrawAmount').value.trim();
-
-  if (!address || !amount) {
-    return alert('آدرس و مبلغ را وارد کنید');
-  }
-
-  try {
-    const data = await api('/withdraw', { address, amount });
-    if (!data.ok) throw new Error(data.error || 'error');
-    alert('درخواست برداشت ثبت و ارسال شد. ID: ' + data.requestId + '\nTX: ' + data.txHash);
-  } catch (err) {
-    alert('خطا در برداشت: ' + err.message);
-  }
-}
-
-init();
+initApp();

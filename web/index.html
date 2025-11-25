@@ -1,29 +1,28 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-  <meta charset="UTF-8">
-  <title>Harmony ONE Wallet</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body dir="rtl">
-  <div class="container">
-    <h2>ولت Harmony ONE</h2>
-    <div id="deposit-info" class="card"></div>
+<!DOCTYPE html><html><head>
+<meta charset="utf-8"><title>Wallet</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="loading.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head><body dir="rtl">
+<div id="loader-overlay">
+ <div class="loading-spinner"></div>
+ <div id="loader-status">در حال بارگذاری...</div>
+ <div id="loader-error"></div>
+</div>
 
-    <div class="actions">
-      <button onclick="checkDeposit()">🔄 بررسی واریز</button>
-      <button onclick="showBalance()">💰 نمایش موجودی</button>
-    </div>
-
-    <div class="withdraw card">
-      <h3>📤 برداشت</h3>
-      <input id="withdrawAddress" placeholder="آدرس مقصد (one1...)" />
-      <input id="withdrawAmount" placeholder="مبلغ (ONE)" />
-      <button onclick="withdraw()">ثبت برداشت</button>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
-</body>
-</html>
+<div class="container">
+ <h2>ولت Harmony ONE</h2>
+ <div id="deposit-info" class="card"></div>
+ <div class="actions">
+   <button onclick="checkDeposit()">🔄 بررسی واریز</button>
+   <button onclick="showBalance()">💰 موجودی</button>
+ </div>
+ <div class="withdraw card">
+   <h3>📤 برداشت</h3>
+   <input id="withdrawAddress" placeholder="one1...">
+   <input id="withdrawAmount" placeholder="مبلغ">
+   <button onclick="withdraw()">ثبت برداشت</button>
+ </div>
+</div>
+<script src="app.js"></script>
+</body></html>
