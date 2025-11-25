@@ -1,7 +1,7 @@
 {
-  "name": "harmony-one-telegram-miniapp",
+  "name": "harmony-one-wallet-ethers",
   "version": "1.0.0",
-  "description": "Telegram Mini App wallet for Harmony ONE with HD wallet and sweep.",
+  "description": "Telegram Mini App backend for Harmony ONE using ethers.js and HD wallet.",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "axios": "^1.7.0",
+    "bech32": "^2.0.0",
     "bip39": "^3.1.0",
     "dotenv": "^16.4.0",
     "express": "^4.19.0",

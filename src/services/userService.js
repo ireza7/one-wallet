@@ -2,11 +2,11 @@ const db = require('../db');
 const { deriveWallet } = require('./hdWallet');
 
 async function findOrCreateUserByTelegram(telegramUser) {
-  const existing = await db.query(
+  let rows = await db.query(
     'SELECT * FROM users WHERE telegram_id = ? LIMIT 1',
     [telegramUser.id]
   );
-  if (existing.length > 0) return existing[0];
+  if (rows.length > 0) return rows[0];
 
   await db.query(
     `INSERT INTO users (telegram_id, username, first_name, last_name)
@@ -19,21 +19,20 @@ async function findOrCreateUserByTelegram(telegramUser) {
     ]
   );
 
-  const rows = await db.query(
+  rows = await db.query(
     'SELECT * FROM users WHERE telegram_id = ? LIMIT 1',
     [telegramUser.id]
   );
-  const newUser = rows[0];
+  const user = rows[0];
 
-  const wallet = deriveWallet(newUser.id);
-
+  const wallet = deriveWallet(user.id);
   await db.query(
     'UPDATE users SET deposit_address = ? WHERE id = ?',
-    [wallet.address, newUser.id]
+    [wallet.oneAddress, user.id]
   );
 
-  newUser.deposit_address = wallet.address;
-  return newUser;
+  user.deposit_address = wallet.oneAddress;
+  return user;
 }
 
 async function getUserByTelegramId(telegramId) {

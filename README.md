@@ -1,27 +1,17 @@
-# Harmony ONE Telegram Mini App Wallet
+# Harmony ONE Telegram Mini App Wallet (ethers.js version)
 
-Mini app بک‌اند + فرانت‌اند برای مدیریت ولت‌های Harmony ONE بر پایه HD Wallet و هات‌ولت تجمیعی.
+این پروژه یک بک‌اند + وب‌اپ (Telegram Mini App) برای ولت هارمونی ONE است:
 
-## ویژگی‌ها
-
-- تولید ولت اختصاصی برای هر کاربر بر اساس HD Wallet (مسیر `m/44'/1023'/0'/0/index`)
-- عدم ذخیره private key کاربران در دیتابیس
-- هات‌ولت تجمیعی
-- بررسی واریز بر اساس تاریخچه تراکنش‌ها و ثبت در جدول `deposit_txs`
-- Sweep خودکار موجودی ولت کاربر به هات‌ولت
-- برداشت از موجودی داخلی کاربر
-- Dockerfile برای اجرا در کانتینر
+- ولت اختصاصی برای هر کاربر با HD Wallet (مسیر `m/44'/1023'/0'/0/index`)
+- فقط **یک** MASTER_MNEMONIC در `.env`
+- Sweep واقعی از ولت کاربر به هات‌ولت
+- آدرس‌هایی که به کاربر نمایش داده می‌شوند همگی به صورت `one1...`
+- استفاده از `ethers.js` + RPC هارمونی (بدون SDKهای قدیمی)
 
 ## راه‌اندازی
 
-1. ساخت دیتابیس MySQL و اجرای:
-
-   ```sql
-   SOURCE schema.sql;
-   ```
-
-2. ساخت فایل `.env` بر اساس `.env.example` و پر کردن مقادیر:
-
+1. دیتابیس MySQL بساز و `schema.sql` را اجرا کن.
+2. یک فایل `.env` بر اساس `.env.example` بساز و مقادیر واقعی را وارد کن.
 3. نصب وابستگی‌ها:
 
    ```bash
@@ -34,21 +24,23 @@ Mini app بک‌اند + فرانت‌اند برای مدیریت ولت‌ها
    npm run dev
    ```
 
-5. اجرای پروDUCTION (خارج از Docker):
+5. اجرای پروداکشن:
 
    ```bash
    NODE_ENV=production npm start
    ```
 
-## اجرای Docker
+## Docker
 
 ```bash
-docker build -t harmony-one-telegram-miniapp .
-docker run -d --name harmony-miniapp -p 3000:3000 --env-file .env harmony-one-telegram-miniapp
+docker build -t harmony-one-wallet-ethers .
+docker run -d --name harmony-wallet -p 3000:3000 --env-file .env harmony-one-wallet-ethers
 ```
 
-## Telegram Mini App
+## تولید MASTER_MNEMONIC
 
-- فرانت‌اند در پوشه `web/`
-- برای استفاده به عنوان Mini App، URL سرویس (مثلاً `https://your-domain.com/`) را در BotFather برای WebApp تعریف کنید.
-- سمت کلاینت مقادیر `Telegram.WebApp.initDataUnsafe` به سرور ارسال می‌شود تا کاربر شناسایی شود (در پروداکشن امضا را باید verify کنید).
+```bash
+npm run generate:mnemonic
+```
+
+خروجی را در `.env` در متغیر `MASTER_MNEMONIC` ذخیره کن (هرگز در گیت نگذار).

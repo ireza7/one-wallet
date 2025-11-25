@@ -7,7 +7,7 @@ const { requestWithdraw } = require('../services/withdrawService');
 function parseTelegramData(req, res, next) {
   const tg = req.body.telegramData;
   if (!tg || !tg.user || !tg.user.id) {
-    return res.status(401).json({ error: 'invalid telegram data' });
+    return res.status(401).json({ ok: false, error: 'invalid telegram data' });
   }
   req.telegramUser = tg.user;
   next();
@@ -29,7 +29,6 @@ router.post('/check-deposit', parseTelegramData, async (req, res) => {
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
     const newTxs = await sweepUserDeposits(user);
-
     res.json({
       ok: true,
       count: newTxs.length,
@@ -62,7 +61,7 @@ router.post('/withdraw', parseTelegramData, async (req, res) => {
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
     const result = await requestWithdraw(user, address, Number(amount));
-    res.json({ ok: true, requestId: result.requestId });
+    res.json({ ok: true, requestId: result.requestId, txHash: result.txHash });
   } catch (err) {
     console.error(err);
     res.status(400).json({ ok: false, error: err.message });

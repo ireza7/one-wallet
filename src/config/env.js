@@ -10,7 +10,6 @@ function requireEnv(name) {
 
 module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
-
   PORT: process.env.PORT || 3000,
 
   DB_HOST: requireEnv('DB_HOST'),
@@ -18,8 +17,9 @@ module.exports = {
   DB_PASS: requireEnv('DB_PASS'),
   DB_NAME: requireEnv('DB_NAME'),
 
-  HARMONY_RPC_URL: requireEnv('HARMONY_RPC_URL'),
   MASTER_MNEMONIC: requireEnv('MASTER_MNEMONIC'),
+  HARMONY_RPC_URL: requireEnv('HARMONY_RPC_URL'),
+
   HOT_WALLET_PRIVATE_KEY: requireEnv('HOT_WALLET_PRIVATE_KEY'),
   HOT_WALLET_ADDRESS: requireEnv('HOT_WALLET_ADDRESS')
 };

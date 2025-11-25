@@ -1,13 +1,12 @@
 const db = require('../db');
-const { HOT_WALLET_PRIVATE_KEY, HOT_WALLET_ADDRESS } = require('../config/env');
 const { sendTransaction } = require('./harmonyService');
+const { HOT_WALLET_PRIVATE_KEY, HOT_WALLET_ADDRESS } = require('../config/env');
 
-async function requestWithdraw(user, targetAddress, amount) {
-  if (amount <= 0) {
-    throw new Error('مبلغ نامعتبر است');
-  }
+async function requestWithdraw(user, targetAddressOne, amount) {
+  if (amount <= 0) throw new Error('مبلغ نامعتبر است');
 
-  const [freshUser] = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);
+  const rows = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);
+  const freshUser = rows[0];
   if (!freshUser) throw new Error('کاربر یافت نشد');
 
   if (Number(freshUser.balance) < amount) {
@@ -19,31 +18,19 @@ async function requestWithdraw(user, targetAddress, amount) {
     [amount, user.id]
   );
 
-  const result = await db.query(
+  const insert = await db.query(
     `INSERT INTO withdraw_requests (user_id, target_address, amount, status)
      VALUES (?, ?, ?, 'PENDING')`,
-    [user.id, targetAddress, amount]
+    [user.id, targetAddressOne, amount]
   );
 
-  return { requestId: result.insertId };
-}
+  const requestId = insert.insertId;
 
-// ساده: بلافاصله درخواست ها را ارسال می‌کند (برای پروداکشن بهتر است صف و تایید ادمین داشته باشید)
-async function processWithdrawRequest(requestId) {
-  const rows = await db.query(
-    'SELECT * FROM withdraw_requests WHERE id = ? AND status = "PENDING" LIMIT 1',
-    [requestId]
-  );
-  if (!rows.length) {
-    throw new Error('درخواست یافت نشد یا پردازش شده است');
-  }
-
-  const request = rows[0];
-
+  // نسخه ساده: همان لحظه برداشت را ارسال می‌کنیم
   const txRes = await sendTransaction(
     HOT_WALLET_PRIVATE_KEY,
-    request.target_address,
-    request.amount
+    targetAddressOne,
+    amount
   );
 
   await db.query(
@@ -54,13 +41,12 @@ async function processWithdrawRequest(requestId) {
   await db.query(
     `INSERT INTO transactions (user_id, tx_hash, tx_type, amount, from_address, to_address, status)
      VALUES (?, ?, 'WITHDRAW', ?, ?, ?, 'PENDING')`,
-    [request.user_id, txRes.txHash, request.amount, HOT_WALLET_ADDRESS, request.target_address]
+    [user.id, txRes.txHash, amount, HOT_WALLET_ADDRESS, targetAddressOne]
   );
 
-  return txRes;
+  return { requestId, txHash: txRes.txHash };
 }
 
 module.exports = {
-  requestWithdraw,
-  processWithdrawRequest
+  requestWithdraw
 };

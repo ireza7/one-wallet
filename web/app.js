@@ -16,6 +16,7 @@ async function init() {
   try {
     const data = await api('/init', {});
     if (!data.ok) throw new Error(data.error || 'init failed');
+
     document.getElementById('deposit-info').innerHTML =
       'آدرس واریز شما:<br><code>' + data.user.deposit_address + '</code>';
   } catch (err) {
@@ -54,7 +55,7 @@ async function withdraw() {
   try {
     const data = await api('/withdraw', { address, amount });
     if (!data.ok) throw new Error(data.error || 'error');
-    alert('درخواست برداشت ثبت شد. ID: ' + data.requestId);
+    alert('درخواست برداشت ثبت و ارسال شد. ID: ' + data.requestId + '\nTX: ' + data.txHash);
   } catch (err) {
     alert('خطا در برداشت: ' + err.message);
   }
