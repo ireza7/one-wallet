@@ -10,9 +10,6 @@ const { telegramAuthMiddleware } = require('./middleware/telegramAuth');
 const userRoutes = require('./routes/user');
 const walletRoutes = require('./routes/wallet');
 
-app.set('trust proxy', true);
-
-
 function createApp() {
   const app = express();
 
@@ -27,6 +24,11 @@ function createApp() {
     req.log = logger;
     next();
   });
+
+  axios.post('/api/telegram/auth', {
+  initData: window.Telegram.WebApp.initData
+});
+
 
   // Basic rate limiting for all /api endpoints
   const apiLimiter = rateLimit({
