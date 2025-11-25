@@ -23,6 +23,7 @@ function verifyTelegramWebAppData(initData, botToken) {
     throw new Error('hash missing in initData');
   }
 
+  // Build data_check_string
   const dataCheckArr = [];
   for (const [key, value] of params.entries()) {
     if (key === 'hash') continue;
@@ -31,11 +32,14 @@ function verifyTelegramWebAppData(initData, botToken) {
   dataCheckArr.sort();
   const dataCheckString = dataCheckArr.join('\n');
 
-  const secretKey = crypto.createHash('sha256')
+  // Secret key = HMAC-SHA256 of bot token
+  const secretKey = crypto
+    .createHash('sha256')
     .update(botToken)
     .digest();
 
-  const hmac = crypto.createHmac('sha256', secretKey)
+  const hmac = crypto
+    .createHmac('sha256', secretKey)
     .update(dataCheckString)
     .digest('hex');
 
@@ -43,6 +47,7 @@ function verifyTelegramWebAppData(initData, botToken) {
     throw new Error('invalid initData hash');
   }
 
+  // Parse user JSON if present
   const rawUser = params.get('user');
   let user = null;
   if (rawUser) {
