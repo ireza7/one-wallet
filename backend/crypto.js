@@ -1,13 +1,23 @@
 const crypto = require('crypto');
 
-const rawKey = process.env.USER_WALLET_ENCRYPTION_KEY;
-if (!rawKey) {
-  throw new Error('USER_WALLET_ENCRYPTION_KEY is not set; cannot protect user wallets');
+let key;
+
+function ensureKey() {
+  if (key) return key;
+
+  const rawKey = process.env.USER_WALLET_ENCRYPTION_KEY;
+  if (!rawKey) {
+    throw new Error(
+      'USER_WALLET_ENCRYPTION_KEY is not set; cannot encrypt or decrypt user wallet keys'
+    );
+  }
+
+  key = crypto.createHash('sha256').update(rawKey).digest();
+  return key;
 }
 
-const key = crypto.createHash('sha256').update(rawKey).digest();
-
 function encryptSecret(secret) {
+  const key = ensureKey();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const ciphertext = Buffer.concat([cipher.update(String(secret), 'utf8'), cipher.final()]);
@@ -16,6 +26,7 @@ function encryptSecret(secret) {
 }
 
 function decryptSecret(payload) {
+  const key = ensureKey();
   const buf = Buffer.from(payload, 'base64');
   const iv = buf.subarray(0, 12);
   const tag = buf.subarray(12, 28);
