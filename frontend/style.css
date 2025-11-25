@@ -1,9 +1,24 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   background-color: #020617;
   color: #e5e7eb;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   margin: 0;
   padding: 12px;
+  min-height: 100vh;
+}
+
+.app-container {
+  max-width: 820px;
+  margin: 0 auto 32px;
+  background: linear-gradient(180deg, rgba(31, 41, 55, 0.35), rgba(2, 6, 23, 0.8));
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
 }
 
 .hidden {
@@ -19,6 +34,7 @@ body {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .tab {
@@ -31,6 +47,14 @@ body {
   font-size: 14px;
 }
 
+.tab:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 1px;
+}
+
 .tab.active {
   background-color: #22c55e;
   color: #000;
@@ -39,6 +63,9 @@ body {
 
 .view {
   padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .mono {
@@ -60,6 +87,13 @@ input, textarea {
   border: 1px solid #374151;
   background-color: #020617;
   color: #e5e7eb;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
 }
 
 button {
@@ -92,6 +126,7 @@ button:disabled {
   padding: 8px;
   margin-bottom: 8px;
   background-color: #020617;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 
 .card p {
@@ -126,6 +161,7 @@ button:disabled {
   width: 90%;
   max-width: 400px;
   border: 1px solid #1f2937;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
 }
 
 .modal-inner h3 {
@@ -146,4 +182,25 @@ button:disabled {
 
 .btn-secondary {
   background-color: #4b5563;
+}
+
+#qrCanvas {
+  display: block;
+  margin: 12px auto;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (min-width: 640px) {
+  body {
+    padding: 24px;
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+  }
+
+  .view {
+    padding: 12px 4px;
+  }
 }
