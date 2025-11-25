@@ -2,6 +2,7 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 const { generateUserWallet } = require('./harmony');
+const { encryptSecret } = require('./crypto');
 
 const pool = mysql.createPool({
   host: config.db.host,
@@ -39,7 +40,7 @@ async function getOrCreateUser(telegramId, username) {
         username || null,
         wallet.address,
         wallet.hexAddress,
-        wallet.privateKey,
+        encryptSecret(wallet.privateKey),
       ]
     );
 

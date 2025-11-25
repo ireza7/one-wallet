@@ -24,6 +24,9 @@ const config = {
     minWithdrawAmount: Number(process.env.MIN_WITHDRAW_AMOUNT || 1),
     currencySymbol: process.env.BOT_BASE_CURRENCY || 'ONE',
   },
+  security: {
+    userWalletEncryptionKey: process.env.USER_WALLET_ENCRYPTION_KEY,
+  },
 };
 
 module.exports = config;

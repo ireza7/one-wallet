@@ -1,4 +1,5 @@
-const { getBalance, sweepToHotWallet, normalizeToHex } = require('./harmony');
+const { getBalance, sweepToHotWallet } = require('./harmony');
+const { decryptSecret } = require('./crypto');
 const db = require('./db');
 
 /**
@@ -48,7 +49,7 @@ async function monitorDepositDifferences() {
           try {
             const sweepTxHash = await sweepToHotWallet(
               u.harmony_address,
-              u.harmony_private_key,
+              decryptSecret(u.harmony_private_key),
               diff
             );
 

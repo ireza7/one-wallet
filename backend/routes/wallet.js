@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const config = require('../config');
 const { sendFromHotWallet, normalizeToHex, getBalance, sweepToHotWallet } = require('../harmony');
+const { decryptSecret } = require('../crypto');
 const { verifyTelegramWebAppData } = require('../utils/telegramAuth');
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -173,33 +174,35 @@ router.post('/annotate', async (req, res) => {
 router.post('/check-deposit', async (req, res) => {
   try {
     const userData = getUserFromInitData(req);
+    const user = await db.getUserByTelegramId(userData.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    const [rows] = await db.pool.query(
-      'SELECT * FROM users WHERE id = ?',
-      [userData.id]
-    );
-    if (rows.length === 0)
-      return res.status(404).json({ success: false, message: 'User not found' });
-
-    const u = rows[0];
-    const balanceStr = await getBalance(u.harmony_address);
+    const balanceStr = await getBalance(user.harmony_address);
     const chainBalance = Number(balanceStr);
-    const lastBalance = Number(u.last_onchain_balance || 0);
+    const lastBalance = Number(user.last_onchain_balance || 0);
+
+    if (!Number.isFinite(chainBalance)) {
+      return res.status(500).json({ success: false, message: 'Invalid on-chain balance' });
+    }
 
     if (chainBalance > lastBalance) {
       const diff = chainBalance - lastBalance;
 
       await db.pool.query(
         'UPDATE users SET last_onchain_balance = ?, internal_balance = internal_balance + ? WHERE id = ?',
-        [chainBalance, diff, userData.id]
+        [chainBalance, diff, user.id]
       );
 
       await db.pool.query(
         'INSERT INTO wallet_ledger (user_id, type, amount, note) VALUES (?, "deposit", ?, "Manual check deposit")',
-        [userData.id, diff]
+        [user.id, diff]
       );
 
-      const sweepTx = await sweepToHotWallet(u);
+      const sweepTx = await sweepToHotWallet(
+        user.harmony_address,
+        decryptSecret(user.harmony_private_key),
+        diff
+      );
 
       return res.json({
         success: true,
