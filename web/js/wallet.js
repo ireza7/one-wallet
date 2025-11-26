@@ -35,14 +35,18 @@
       const res = await fetch("https://explorer.harmony.one/api/v2/stats");
       const data = await res.json();
 
-      if (data && data.price) {
-        const priceEl = document.getElementById("coin_price");
-        if (priceEl) priceEl.innerText = "$" + Number(data.price).toFixed(4);
+      // قیمت واقعی از API رسمی
+      if (data && data.coin_price) {
+        const priceEl = document.getElementById("one-price");
+        if (priceEl) {
+          priceEl.innerText = "$" + Number(data.coin_price).toFixed(6);
+        }
       }
     } catch (e) {
-      console.warn("خطا در دریافت قیمت ONE", e);
+      console.warn("خطا در دریافت قیمت ONE:", e);
     }
   }
+
 
   async function checkDeposit() {
     try {
