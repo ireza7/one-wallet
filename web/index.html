@@ -1,133 +1,69 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>Harmony ONE Wallet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Wallet - UI Redesign</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
-<body dir="rtl">
-  <main class="app-shell">
-    <section class="app-layout">
+<body class="bg-gray-100 text-gray-900 font-sans">
+  <!-- Header -->
+  <header class="bg-white shadow p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">One Wallet</h1>
+    <nav class="space-x-4 space-x-reverse">
+      <a href="#" class="text-gray-600 hover:text-gray-800">داشبورد</a>
+      <a href="#" class="text-gray-600 hover:text-gray-800">تراکنش‌ها</a>
+      <a href="#" class="text-gray-600 hover:text-gray-800">تنظیمات</a>
+    </nav>
+  </header>
 
-      <header class="app-header">
-        <div class="app-title">
-          <div class="app-logo">ONE</div>
-          <div class="app-title-text">
-            <h1>ولت Harmony ONE</h1>
-            <p>کیف‌پول ساده و امن داخل تلگرام</p>
-          </div>
-        </div>
-      </header>
+  <!-- Main Layout -->
+  <main class="max-w-5xl mx-auto p-4 mt-6 space-y-6">
 
-      <section id="main-page" class="main-card">
-
-        <!-- نوار وضعیت -->
-        <div id="status-bar" class="status-bar hidden">
-          <div class="status-spinner"></div>
-          <span id="status-text">در حال اتصال…</span>
-        </div>
-
-        <!-- کارت ولت -->
-        <section id="wallet-card" class="card wallet-card">
-          <div class="wallet-header">
-            <img src="one-logo.svg" class="token-logo" alt="ONE">
-            <div class="wallet-balance">
-              <div id="balance-one" class="balance-one">0 ONE</div>
-              <div id="balance-usd" class="balance-usd">$ 0.00</div>
-            </div>
-          </div>
-
-          <div class="wallet-footer">
-            <div class="wallet-row">
-              <span class="label">قیمت ONE</span>
-              <div class="wallet-row-right">
-                <span id="one-price" class="price">$0.0000</span>
-                <button class="icon-btn" type="button" onclick="refreshBalance()" aria-label="بروزرسانی موجودی">
-                  🔄
-                </button>
-              </div>
-            </div>
-
-            <div class="deposit-address">
-              <div class="label-row">
-                <span class="label">آدرس واریز</span>
-              </div>
-              <code id="deposit-address" class="address"></code>
-            </div>
-          </div>
-        </section>
-
-        <!-- اکشن‌ها -->
-        <section class="actions">
-          <button type="button" class="btn primary" onclick="checkDeposit()">
-            🔄 بررسی واریز
-          </button>
-          <button type="button" class="btn ghost" onclick="showBalanceAlert()">
-            💰 نمایش موجودی
-          </button>
-          <button type="button" class="btn ghost" onclick="openHistory()">
-            📜 تاریخچه
-          </button>
-        </section>
-
-        <!-- برداشت -->
-        <section class="card withdraw">
-          <div class="section-header">
-            <h2>📤 درخواست برداشت</h2>
-            <p>ONE را به ولت دلخواه خود منتقل کنید.</p>
-          </div>
-
-          <div class="field">
-            <label for="withdrawAddress">آدرس مقصد</label>
-            <input
-              id="withdrawAddress"
-              placeholder="مثال: one1..."
-              autocomplete="off"
-            />
-          </div>
-
-          <div class="field">
-            <label for="withdrawAmount">مبلغ (ONE)</label>
-            <input
-              id="withdrawAmount"
-              placeholder="مثال: 12.5"
-              inputmode="decimal"
-              autocomplete="off"
-            />
-          </div>
-
-          <button type="button" class="btn primary full-width" onclick="withdraw()">
-            ثبت درخواست برداشت
-          </button>
-        </section>
-
-      </section>
-
-      <!-- صفحه تاریخچه -->
-      <section id="history-page" class="history-page hidden">
-        <div class="card history-card">
-          <header class="history-header">
-            <button class="icon-btn" type="button" onclick="closeHistory()">
-              ←
-            </button>
-            <h2>📜 تاریخچه تراکنش‌ها</h2>
-          </header>
-
-          <div id="history-list" class="history-list">
-            <!-- آیتم‌ها با JS اضافه می‌شوند -->
-          </div>
-
-          <button class="btn ghost full-width" type="button" onclick="closeHistory()">
-            بازگشت
-          </button>
-        </div>
-      </section>
-
+    <!-- Balance Card -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-lg font-semibold mb-2">موجودی کیف پول</h2>
+      <div class="text-4xl font-bold text-green-600">12,850,000 تومان</div>
+      <div class="text-gray-500 mt-2">آخرین بروزرسانی: چند لحظه پیش</div>
     </section>
-  </main>
 
-  <script src="app.js"></script>
+    <!-- Actions -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <button class="bg-blue-600 text-white p-4 rounded-xl shadow hover:bg-blue-700">افزودن وجه</button>
+      <button class="bg-green-600 text-white p-4 rounded-xl shadow hover:bg-green-700">برداشت وجه</button>
+      <button class="bg-gray-700 text-white p-4 rounded-xl shadow hover:bg-gray-800">انتقال</button>
+    </section>
+
+    <!-- Transactions Table -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">تراکنش‌های اخیر</h2>
+      <table class="w-full text-right border-collapse">
+        <thead>
+          <tr class="text-gray-600 border-b">
+            <th class="pb-2">تاریخ</th>
+            <th class="pb-2">نوع</th>
+            <th class="pb-2">مبلغ</th>
+            <th class="pb-2">وضعیت</th>
+          </tr>
+        </thead>
+        <tbody id="tx-table" hx-get="/api/transactions" hx-trigger="load" hx-target="#tx-table">
+          <tr>
+            <td class="py-2">1402/11/01</td>
+            <td>واریز</td>
+            <td class="text-green-600">+ 2,000,000</td>
+            <td>موفق</td>
+          </tr>
+          <tr class="bg-gray-50">
+            <td class="py-2">1402/10/28</td>
+            <td>خرید</td>
+            <td class="text-red-600">- 450,000</td>
+            <td>موفق</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
 </body>
 </html>
