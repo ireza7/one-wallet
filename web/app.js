@@ -1,20 +1,11 @@
-// web/app.js
-let tg = null;
+// app.js (نسخه بدون صفحه لودینگ)
 
-try {
-  if (window.Telegram && window.Telegram.WebApp) {
-    tg = window.Telegram.WebApp;
-  }
-} catch (e) {
-  tg = null;
-}
-
+const tg = window.Telegram?.WebApp || null;
 
 function api(path, data) {
   const payload = Object.assign({}, data || {});
 
-  // به صورت پیش‌فرض initData را از Telegram WebApp اضافه می‌کنیم
-  if (!payload.initData && tg && tg.initData) {
+  if (!payload.initData && tg?.initData) {
     payload.initData = tg.initData;
   }
 
@@ -29,149 +20,106 @@ function api(path, data) {
     });
 }
 
+// بدون هیچ لودری
 function setStatus(msg) {
-  const el = document.getElementById("loader-status");
-  if (el) el.innerText = msg;
+  console.log(msg);
 }
 
-function showError(msg) {
-  alert(msg);
-}
-
-function hideLoader() {
-  const overlay = document.getElementById('loader-overlay');
-  if (overlay) overlay.style.display = 'none';
-}
+// حذف کامل overlay
+function hideLoader() {}
+function showError(msg) { alert(msg); }
 
 async function initApp() {
   try {
     if (!tg) {
-      setStatus("عدم دسترسی به Telegram WebApp");
-      showError("لطفاً این Mini App را از داخل تلگرام باز کنید.");
-      hideLoader();
+      showError("لطفاً Mini App را داخل تلگرام باز کنید.");
       return;
     }
 
-    tg.ready && tg.ready();
-
-    setStatus("در حال شناسایی کاربر...");
+    tg.ready?.();
 
     const initData = tg.initData;
     const unsafe = tg.initDataUnsafe;
 
-    if (!unsafe || !unsafe.user || !unsafe.user.id) {
-      setStatus("اطلاعات کاربر یافت نشد");
-      showError("Mini App را از داخل ربات باز کنید.");
-      hideLoader();
+    if (!unsafe?.user?.id) {
+      showError("کاربر در تلگرام شناسایی نشد.");
       return;
     }
-
-    setStatus("در حال ورود...");
 
     const resp = await api('/init', { initData });
 
     if (!resp.ok) {
-      setStatus("خطا در ورود");
-      if (resp.error === 'invalid telegram auth') {
-        showError("احراز هویت تلگرام نامعتبر است. Mini App را ببندید و دوباره از ربات باز کنید.");
-      } else if (resp.error === 'network_error') {
-        showError("خطای شبکه. اتصال اینترنت یا سرور را بررسی کنید.");
-      } else {
-        showError(resp.error || 'خطا در ورود');
-      }
-      hideLoader();
+      showError(resp.error || "خطا در ورود");
       return;
     }
 
     const depositAddressEl = document.getElementById('deposit-address');
-    if (depositAddressEl && resp.user && resp.user.deposit_address) {
+    if (depositAddressEl && resp.user?.deposit_address) {
       depositAddressEl.innerText = resp.user.deposit_address;
     }
 
-    hideLoader();
-
     await refreshBalance();
     setInterval(refreshBalance, 15000);
+
   } catch (err) {
-    setStatus("خطای داخلی برنامه");
-    showError("خطا در اجرای برنامه");
-    hideLoader();
+    console.log(err);
+    showError("خطا در اجرای اپلیکیشن");
   }
 }
 
 async function refreshBalance() {
   try {
-    const initData = tg && tg.initData;
+    const initData = tg?.initData;
     if (!initData) return;
 
     const res = await api('/balance', { initData });
-
     if (!res.ok) return;
 
     const balanceEl = document.getElementById('balance-one');
     if (balanceEl) balanceEl.innerText = res.balance + " ONE";
-  } catch {
-    // سایلنت
-  }
+  } catch {}
 }
 
 async function checkDeposit() {
   try {
-    const initData = tg && tg.initData;
-    if (!initData) {
-      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
-    }
+    const initData = tg?.initData;
+    if (!initData) return showError("initData موجود نیست.");
 
     const d = await api('/check-deposit', { initData });
 
-    if (d.rate_limited) {
-      alert(d.error);
-      return;
-    }
-
-    if (!d.ok) {
-      alert(d.error || "خطا در بررسی واریز");
-      return;
-    }
+    if (d.rate_limited) return alert(d.error);
+    if (!d.ok) return alert(d.error || "خطا");
 
     alert(d.message);
     await refreshBalance();
+
   } catch {
     alert("خطا در بررسی واریز");
   }
 }
 
 async function showBalanceAlert() {
-  const initData = tg && tg.initData;
-  if (!initData) {
-    return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
-  }
+  const initData = tg?.initData;
+  if (!initData) return alert("initData موجود نیست.");
 
   const d = await api('/balance', { initData });
-
   if (d.ok) alert("موجودی شما: " + d.balance + " ONE");
 }
 
 async function withdraw() {
   try {
-    const initData = tg && tg.initData;
-    if (!initData) {
-      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
-    }
+    const initData = tg?.initData;
+    if (!initData) return alert("initData موجود نیست.");
 
     const addr = document.getElementById('withdrawAddress').value.trim();
     const amt = Number(document.getElementById('withdrawAmount').value);
 
-    if (!addr || !amt) return alert("لطفاً اطلاعات برداشت را کامل وارد کنید.");
+    if (!addr || !amt) return alert("اطلاعات برداشت کامل نیست.");
 
     const d = await api('/withdraw', { initData, address: addr, amount: amt });
+    if (!d.ok) return alert(d.error || "خطای برداشت");
 
-    if (!d.ok) {
-      alert(d.error || "خطای برداشت");
-      return;
-    }
-
-    alert("درخواست برداشت ثبت شد.\nTransaction: " + d.txHash);
+    alert("برداشت انجام شد.\nTX: " + d.txHash);
     await refreshBalance();
 
   } catch {
@@ -181,23 +129,16 @@ async function withdraw() {
 
 async function loadHistory() {
   try {
-    const initData = tg && tg.initData;
-    if (!initData) {
-      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
-    }
+    const initData = tg?.initData;
+    if (!initData) return alert("initData موجود نیست.");
 
     const data = await api('/history', { initData });
-
-    if (!data.ok) {
-      alert("خطا در دریافت تاریخچه");
-      return;
-    }
+    if (!data.ok) return alert("خطا در دریافت تاریخچه");
 
     const list = document.getElementById('history-list');
     if (!list) return;
 
     list.innerHTML = "";
-
     data.history.forEach(tx => {
       const item = document.createElement('div');
       item.className = "history-item";
@@ -210,7 +151,7 @@ async function loadHistory() {
     });
 
   } catch {
-    alert("خطا در بارگذاری تاریخچه");
+    alert("خطا در تاریخچه");
   }
 }
 
