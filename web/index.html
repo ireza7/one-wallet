@@ -2,68 +2,361 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>One Wallet - UI Redesign</title>
+  <title>One Wallet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans">
-  <!-- Header -->
-  <header class="bg-white shadow p-4 flex justify-between items-center">
-    <h1 class="text-xl font-bold">One Wallet</h1>
-    <nav class="space-x-4 space-x-reverse">
-      <a href="#" class="text-gray-600 hover:text-gray-800">داشبورد</a>
-      <a href="#" class="text-gray-600 hover:text-gray-800">تراکنش‌ها</a>
-      <a href="#" class="text-gray-600 hover:text-gray-800">تنظیمات</a>
-    </nav>
-  </header>
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <main class="max-w-md mx-auto px-3 py-4 flex flex-col gap-4">
+    <!-- Header -->
+    <header class="flex items-center justify-between">
+      <div>
+        <h1 class="text-lg font-semibold">One Wallet</h1>
+        <p id="user-label" class="text-xs text-slate-400 mt-1">در حال شناسایی کاربر...</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/20 text-sky-400 font-bold text-sm">ONE</span>
+      </div>
+    </header>
 
-  <!-- Main Layout -->
-  <main class="max-w-5xl mx-auto p-4 mt-6 space-y-6">
+    <!-- Status bar -->
+    <div id="status-bar" class="hidden rounded-full bg-slate-800/80 border border-slate-700 px-3 py-1.5 text-xs flex items-center gap-2">
+      <span class="h-2 w-2 rounded-full bg-sky-400 animate-pulse"></span>
+      <span id="status-text">در حال اتصال...</span>
+    </div>
 
-    <!-- Balance Card -->
-    <section class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-lg font-semibold mb-2">موجودی کیف پول</h2>
-      <div class="text-4xl font-bold text-green-600">12,850,000 تومان</div>
-      <div class="text-gray-500 mt-2">آخرین بروزرسانی: چند لحظه پیش</div>
+    <!-- Main page -->
+    <section id="main-page" class="flex flex-col gap-4">
+      <!-- Wallet card -->
+      <section class="rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 px-4 py-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-400">موجودی</span>
+          <button type="button" onclick="showBalanceAlert()" class="text-[11px] text-sky-400 hover:text-sky-300">
+            نمایش در دیالوگ
+          </button>
+        </div>
+        <div id="balance-one" class="text-3xl font-bold">0 ONE</div>
+        <div class="flex items-center justify-between text-xs text-slate-400 mt-2">
+          <div>
+            <span class="opacity-70">آدرس واریز</span>
+            <div id="deposit-address" class="mt-1 text-[11px] font-mono break-all">
+              در حال بارگذاری...
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick actions -->
+      <section class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="checkDeposit()" class="rounded-xl bg-sky-500 text-slate-950 text-sm font-medium py-3 px-3 hover:bg-sky-400 active:bg-sky-600">
+          بررسی واریز جدید
+        </button>
+        <button type="button" onclick="openHistory()" class="rounded-xl bg-slate-800 text-sm font-medium py-3 px-3 hover:bg-slate-700 border border-slate-700">
+          تاریخچه تراکنش‌ها
+        </button>
+      </section>
+
+      <!-- Withdraw form -->
+      <section class="rounded-2xl bg-slate-900/60 border border-slate-800 px-4 py-4 space-y-3">
+        <h2 class="text-sm font-semibold">برداشت</h2>
+        <div class="space-y-2">
+          <label for="withdrawAddress" class="block text-xs text-slate-400">آدرس مقصد</label>
+          <input
+            id="withdrawAddress"
+            type="text"
+            class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+            placeholder="مثال: one1..."
+            autocomplete="off"
+          />
+        </div>
+        <div class="space-y-2">
+          <label for="withdrawAmount" class="block text-xs text-slate-400">مبلغ (ONE)</label>
+          <input
+            id="withdrawAmount"
+            type="number"
+            min="0"
+            step="0.000001"
+            class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+            placeholder="مثال: 10"
+          />
+        </div>
+        <button
+          type="button"
+          onclick="withdraw()"
+          class="w-full rounded-xl bg-emerald-500 text-slate-950 text-sm font-semibold py-2.5 hover:bg-emerald-400 active:bg-emerald-600 mt-1"
+        >
+          ثبت درخواست برداشت
+        </button>
+      </section>
     </section>
 
-    <!-- Actions -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <button class="bg-blue-600 text-white p-4 rounded-xl shadow hover:bg-blue-700">افزودن وجه</button>
-      <button class="bg-green-600 text-white p-4 rounded-xl shadow hover:bg-green-700">برداشت وجه</button>
-      <button class="bg-gray-700 text-white p-4 rounded-xl shadow hover:bg-gray-800">انتقال</button>
+    <!-- History overlay -->
+    <section id="history-page" class="hidden fixed inset-0 z-20 bg-slate-950/95">
+      <div class="max-w-md mx-auto h-full flex flex-col px-3 py-4 gap-3">
+        <header class="flex items-center justify-between">
+          <button
+            type="button"
+            onclick="closeHistory()"
+            class="rounded-full h-8 w-8 flex items-center justify-center border border-slate-700 text-slate-300 text-lg leading-none"
+          >
+            ×
+          </button>
+          <h2 class="text-sm font-semibold">تاریخچه تراکنش‌ها</h2>
+          <span class="w-8"></span>
+        </header>
+        <div id="history-empty" class="text-xs text-slate-500 mt-2 hidden">
+          هنوز تراکنشی ثبت نشده است.
+        </div>
+        <div id="history-list" class="flex-1 overflow-y-auto space-y-2 text-sm mt-1">
+          <!-- history items injected here -->
+        </div>
+      </div>
     </section>
-
-    <!-- Transactions Table -->
-    <section class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-lg font-semibold mb-4">تراکنش‌های اخیر</h2>
-      <table class="w-full text-right border-collapse">
-        <thead>
-          <tr class="text-gray-600 border-b">
-            <th class="pb-2">تاریخ</th>
-            <th class="pb-2">نوع</th>
-            <th class="pb-2">مبلغ</th>
-            <th class="pb-2">وضعیت</th>
-          </tr>
-        </thead>
-        <tbody id="tx-table" hx-get="/api/transactions" hx-trigger="load" hx-target="#tx-table">
-          <tr>
-            <td class="py-2">1402/11/01</td>
-            <td>واریز</td>
-            <td class="text-green-600">+ 2,000,000</td>
-            <td>موفق</td>
-          </tr>
-          <tr class="bg-gray-50">
-            <td class="py-2">1402/10/28</td>
-            <td>خرید</td>
-            <td class="text-red-600">- 450,000</td>
-            <td>موفق</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
   </main>
+
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script>
+    const tg = window.Telegram?.WebApp || null;
+
+    function setStatus(msg) {
+      const bar = document.getElementById("status-bar");
+      const text = document.getElementById("status-text");
+      if (!bar || !text) return;
+      text.textContent = msg;
+      bar.classList.remove("hidden");
+    }
+
+    function clearStatus() {
+      const bar = document.getElementById("status-bar");
+      if (!bar) return;
+      bar.classList.add("hidden");
+    }
+
+    function showError(msg) {
+      alert(msg);
+    }
+
+    async function api(path, data) {
+      const payload = Object.assign({}, data || {});
+      if (!payload.initData && tg?.initData) {
+        payload.initData = tg.initData;
+      }
+      const res = await fetch("/api" + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      return res.json();
+    }
+
+    async function refreshBalance() {
+      try {
+        const initData = tg?.initData;
+        if (!initData) return;
+        setStatus("در حال دریافت موجودی...");
+        const res = await api("/balance", { initData });
+        clearStatus();
+        if (!res || typeof res.balance === "undefined") return;
+        const balanceEl = document.getElementById("balance-one");
+        if (balanceEl) {
+          balanceEl.textContent = res.balance + " ONE";
+        }
+      } catch (e) {
+        console.error(e);
+        clearStatus();
+      }
+    }
+
+    async function showBalanceAlert() {
+      try {
+        const initData = tg?.initData;
+        if (!initData) {
+          return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        }
+        const d = await api("/balance", { initData });
+        if (d.ok) {
+          alert("موجودی شما: " + d.balance + " ONE");
+        } else {
+          alert("خطا در دریافت موجودی");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("خطا در دریافت موجودی");
+      }
+    }
+
+    async function checkDeposit() {
+      try {
+        const initData = tg?.initData;
+        if (!initData) {
+          return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        }
+        setStatus("در حال بررسی واریز...");
+        const d = await api("/check-deposit", { initData });
+        clearStatus();
+        if (d.rate_limited) {
+          alert(d.error || "لطفاً چند لحظه دیگر دوباره تلاش کنید.");
+          return;
+        }
+        if (!d.ok) {
+          alert(d.error || "خطا در بررسی واریز");
+          return;
+        }
+        if (d.new_deposit) {
+          alert("واریز جدید با موفقیت ثبت شد.\nمبلغ: " + d.amount + " ONE");
+        } else {
+          alert("واریز جدیدی یافت نشد.");
+        }
+        await refreshBalance();
+      } catch (e) {
+        console.error(e);
+        clearStatus();
+        alert("خطا در بررسی واریز");
+      }
+    }
+
+    async function withdraw() {
+      try {
+        const initData = tg?.initData;
+        if (!initData) {
+          return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        }
+        const addrInput = document.getElementById("withdrawAddress");
+        const amountInput = document.getElementById("withdrawAmount");
+        const addr = addrInput?.value.trim();
+        const amt = Number(amountInput?.value);
+        if (!addr || !amt) {
+          return alert("لطفاً اطلاعات برداشت را کامل وارد کنید.");
+        }
+        setStatus("در حال ثبت درخواست برداشت...");
+        const d = await api("/withdraw", { initData, address: addr, amount: amt });
+        clearStatus();
+        if (!d.ok) {
+          alert(d.error || "خطای برداشت");
+          return;
+        }
+        alert("درخواست برداشت ثبت شد.\nTransaction: " + d.txHash);
+        if (amountInput) amountInput.value = "";
+        await refreshBalance();
+      } catch (e) {
+        console.error(e);
+        clearStatus();
+        alert("خطا در برداشت");
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const initData = tg?.initData;
+        if (!initData) {
+          return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        }
+        setStatus("در حال بارگذاری تاریخچه...");
+        const data = await api("/history", { initData });
+        clearStatus();
+        if (!data.ok) {
+          alert("خطا در دریافت تاریخچه");
+          return;
+        }
+        const list = document.getElementById("history-list");
+        const empty = document.getElementById("history-empty");
+        if (!list) return;
+        list.innerHTML = "";
+        const history = Array.isArray(data.history) ? data.history : [];
+        if (!history.length) {
+          if (empty) empty.classList.remove("hidden");
+          return;
+        } else if (empty) {
+          empty.classList.add("hidden");
+        }
+        history.forEach((tx) => {
+          const item = document.createElement("div");
+          item.className = "rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 flex flex-col gap-1";
+          item.innerHTML = `
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold">${tx.tx_type || ""}</span>
+              <span class="text-slate-400">${tx.created_at || ""}</span>
+            </div>
+            <div class="text-xs">مبلغ: <span class="font-mono">${tx.amount}</span></div>
+            <div class="text-[10px] text-slate-500 break-all">${tx.tx_hash || ""}</div>
+          `;
+          list.appendChild(item);
+        });
+      } catch (e) {
+        console.error(e);
+        clearStatus();
+        alert("خطا در دریافت تاریخچه");
+      }
+    }
+
+    function openHistory() {
+      const main = document.getElementById("main-page");
+      const history = document.getElementById("history-page");
+      if (main) main.classList.add("hidden");
+      if (history) history.classList.remove("hidden");
+      loadHistory();
+    }
+
+    function closeHistory() {
+      const main = document.getElementById("main-page");
+      const history = document.getElementById("history-page");
+      if (history) history.classList.add("hidden");
+      if (main) main.classList.remove("hidden");
+    }
+
+    async function initApp() {
+      try {
+        setStatus("در حال آماده‌سازی اپلیکیشن...");
+        if (!tg) {
+          clearStatus();
+          showError("لطفاً این Mini App را از داخل تلگرام باز کنید.");
+          return;
+        }
+        tg.ready?.();
+        tg.expand?.();
+        const initData = tg.initData;
+        const unsafe = tg.initDataUnsafe;
+        if (!initData || !unsafe?.user?.id) {
+          clearStatus();
+          showError("کاربر تلگرام شناسایی نشد. Mini App را از داخل ربات باز کنید.");
+          return;
+        }
+        const userLabel = document.getElementById("user-label");
+        if (userLabel) {
+          const name = [unsafe.user.first_name, unsafe.user.last_name].filter(Boolean).join(" ");
+          userLabel.textContent = name || ("User ID: " + unsafe.user.id);
+        }
+        setStatus("در حال ورود به والت...");
+        const resp = await api("/init", { initData });
+        if (!resp.ok) {
+          if (resp.error === "invalid telegram auth") {
+            showError("احراز هویت تلگرام نامعتبر است. Mini App را ببندید و دوباره از ربات باز کنید.");
+          } else if (resp.error === "network_error") {
+            showError("خطای شبکه. اتصال اینترنت یا سرور را بررسی کنید.");
+          } else {
+            showError(resp.error || "خطا در ورود");
+          }
+          clearStatus();
+          return;
+        }
+        const depositAddressEl = document.getElementById("deposit-address");
+        if (depositAddressEl && resp.user?.deposit_address) {
+          depositAddressEl.textContent = resp.user.deposit_address;
+        } else if (depositAddressEl) {
+          depositAddressEl.textContent = "آدرس واریز در دسترس نیست.";
+        }
+        await refreshBalance();
+        clearStatus();
+        setInterval(refreshBalance, 15000);
+      } catch (err) {
+        console.error(err);
+        clearStatus();
+        showError("خطا در اجرای برنامه");
+      }
+    }
+
+    window.addEventListener("load", initApp);
+  </script>
 </body>
 </html>
