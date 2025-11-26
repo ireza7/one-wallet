@@ -1,15 +1,21 @@
-const tg = window.Telegram.WebApp;
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
 function api(path, data) {
+  const payload = Object.assign({}, data || {});
+  // به صورت پیش‌فرض initData را از Telegram WebApp اضافه می‌کنیم
+  if (!payload.initData && tg && tg.initData) {
+    payload.initData = tg.initData;
+  }
+
   return fetch("/api" + path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data || {})
+    body: JSON.stringify(payload)
   }).then(r => r.json());
 }
 
 function setStatus(msg) {
-  const el = document.getElementById("status");
+  const el = document.getElementById("loader-status");
   if (el) el.innerText = msg;
 }
 
@@ -18,11 +24,19 @@ function showError(msg) {
 }
 
 function hideLoader() {
-  document.getElementById('loader').style.display = 'none';
+  const overlay = document.getElementById('loader-overlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
 async function initApp() {
   try {
+    if (!tg) {
+      showError("لطفاً این Mini App را از داخل تلگرام باز کنید.");
+      return;
+    }
+
+    tg.ready && tg.ready();
+
     setStatus("در حال شناسایی کاربر...");
 
     const initData = tg.initData;
@@ -59,7 +73,8 @@ async function refreshBalance() {
 
     if (!res.ok) return;
 
-    document.getElementById('balance').innerText = res.balance + " TON";
+    const balanceEl = document.getElementById('balance-one');
+    if (balanceEl) balanceEl.innerText = res.balance + " ONE";
   } catch { }
 }
 
@@ -91,8 +106,8 @@ async function withdraw() {
   try {
     const initData = tg.initData;
 
-    const addr = document.getElementById('withdraw-address').value.trim();
-    const amt = Number(document.getElementById('withdraw-amount').value);
+    const addr = document.getElementById('withdrawAddress').value.trim();
+    const amt = Number(document.getElementById('withdrawAmount').value);
 
     if (!addr || !amt) return alert("لطفاً اطلاعات برداشت را کامل وارد کنید.");
 

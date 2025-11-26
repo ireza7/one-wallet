@@ -69,7 +69,12 @@ function validateTelegramInitData(initData) {
 
 function telegramAuth(req, res, next) {
   try {
-    const initData = req.body.initData;
+    // initData می‌تواند از کلاینت با نام‌های مختلف ارسال شده باشد
+    let initData = req.body && (req.body.initData || req.body.init_data || req.body.init);
+    if (!initData && typeof req.query.initData === 'string') {
+      initData = req.query.initData;
+    }
+
     const user = validateTelegramInitData(initData);
     if (!user) {
       return res.status(401).json({ ok: false, error: 'invalid telegram auth' });
