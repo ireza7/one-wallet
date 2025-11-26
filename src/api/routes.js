@@ -18,12 +18,6 @@ function safeEqual(a, b) {
 }
 
 function validateTelegramInitData(initData) {
-  console.log("RAW initData:", initData);
-  console.log("BOT_TOKEN:", BOT_TOKEN);
-  console.log("params:", [...params.entries()]);
-  console.log("expected hmac:", hmac);
-  console.log("received hash:", hash);
-
   if (!initData || !BOT_TOKEN) return null;
 
   const params = new URLSearchParams(initData);
