@@ -19,17 +19,28 @@
 
       const balanceEl = document.getElementById("balance-one");
       const usdEl = document.getElementById("balance-usd");
-      const priceEl = document.getElementById("one-price");
 
       if (balanceEl) balanceEl.innerText = res.balance + " ONE";
       if (usdEl && typeof res.usd_value !== "undefined") {
         usdEl.innerText = "$ " + res.usd_value;
       }
-      if (priceEl && typeof res.price !== "undefined") {
-        priceEl.innerText = "$" + res.price;
-      }
     } catch (e) {
       console.warn("refreshBalance error", e);
+    }
+  }
+
+  // Fetch ONE price from Harmony explorer official API
+  async function fetchOnePrice() {
+    try {
+      const res = await fetch("https://explorer.harmony.one/api/v2/stats");
+      const data = await res.json();
+
+      if (data && data.price) {
+        const priceEl = document.getElementById("one-price");
+        if (priceEl) priceEl.innerText = "$" + Number(data.price).toFixed(4);
+      }
+    } catch (e) {
+      console.warn("خطا در دریافت قیمت ONE", e);
     }
   }
 
@@ -128,7 +139,6 @@
         }
       );
     } else {
-      // fallback
       const tmp = document.createElement("textarea");
       tmp.value = text;
       document.body.appendChild(tmp);
@@ -190,8 +200,9 @@
         depositAddressEl.innerText = resp.user.deposit_address;
       }
 
-      setStatus("در حال دریافت موجودی...");
+      setStatus("در حال دریافت موجودی و قیمت...");
       await refreshBalance();
+      await fetchOnePrice();
 
       if (App.loadHistory) {
         await App.loadHistory();
@@ -199,8 +210,9 @@
 
       clearStatus();
 
-      // auto refresh balance
+      // auto refresh every 15s
       setInterval(refreshBalance, 15000);
+      setInterval(fetchOnePrice, 15000);
     } catch (err) {
       console.error(err);
       clearStatus();
@@ -209,6 +221,7 @@
   }
 
   App.refreshBalance = refreshBalance;
+  App.fetchOnePrice = fetchOnePrice;
   App.checkDeposit = checkDeposit;
   App.withdraw = withdraw;
   App.copyDepositAddress = copyDepositAddress;

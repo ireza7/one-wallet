@@ -10,13 +10,23 @@
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts: Vazirmatn (FA) + Inter (EN) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['system-ui', 'ui-sans-serif', 'Segoe UI', 'sans-serif'],
+            sans: ['Vazirmatn', 'Inter', 'system-ui'],
+            en: ['Inter', 'system-ui'],
           },
         },
       },
@@ -33,11 +43,15 @@
     <header class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <div
-          class="w-10 h-10 rounded-full border border-emerald-300 dark:border-emerald-700 bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm flex items-center justify-center"
+          class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md"
         >
-          <span class="text-[12px] font-bold tracking-wider text-white">
-            ONE
-          </span>
+          <!-- Harmony ONE SVG logo -->
+          <svg width="22" height="22" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M199.7 0C89.4 0 0 89.4 0 199.7C0 310 89.4 399.4 199.7 399.4C310 399.4 399.4 310 399.4 199.7C399.4 89.4 310 0 199.7 0ZM282.3 282.3C252.7 311.9 204.2 311.9 174.7 282.3C145.1 252.7 145.1 204.2 174.7 174.7C204.2 145.1 252.7 145.1 282.3 174.7C311.9 204.2 311.9 252.7 282.3 282.3ZM224.3 124.8C197.5 124.8 175.8 103.1 175.8 76.3C175.8 49.5 197.5 27.8 224.3 27.8C251.1 27.8 272.8 49.5 272.8 76.3C272.8 103.1 251.1 124.8 224.3 124.8ZM125 174.7C154.6 145.1 203.1 145.1 232.6 174.7C262.2 204.2 262.2 252.7 232.6 282.3C203.1 311.9 154.6 311.9 125 282.3C95.4 252.7 95.4 204.2 125 174.7Z"
+              fill="white"
+            />
+          </svg>
         </div>
         <div class="text-right">
           <h1 class="text-sm font-semibold">ولت Harmony ONE</h1>
@@ -77,9 +91,14 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-md"
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md"
           >
-            <span class="text-white font-bold text-[11px]">ONE</span>
+            <svg width="22" height="22" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M199.7 0C89.4 0 0 89.4 0 199.7C0 310 89.4 399.4 199.7 399.4C310 399.4 399.4 310 399.4 199.7C399.4 89.4 310 0 199.7 0ZM282.3 282.3C252.7 311.9 204.2 311.9 174.7 282.3C145.1 252.7 145.1 204.2 174.7 174.7C204.2 145.1 252.7 145.1 282.3 174.7C311.9 204.2 311.9 252.7 282.3 282.3ZM224.3 124.8C197.5 124.8 175.8 103.1 175.8 76.3C175.8 49.5 197.5 27.8 224.3 27.8C251.1 27.8 272.8 49.5 272.8 76.3C272.8 103.1 251.1 124.8 224.3 124.8ZM125 174.7C154.6 145.1 203.1 145.1 232.6 174.7C262.2 204.2 262.2 252.7 232.6 282.3C203.1 311.9 154.6 311.9 125 282.3C95.4 252.7 95.4 204.2 125 174.7Z"
+                fill="white"
+              />
+            </svg>
           </div>
 
           <div class="flex flex-col">
@@ -101,18 +120,10 @@
             <div class="flex items-center gap-2">
               <span
                 id="one-price"
-                class="text-[13px] font-medium text-slate-800 dark:text-slate-100"
+                class="text-[13px] font-medium text-slate-800 dark:text-slate-100 font-en"
               >
                 $0.0000
               </span>
-              <button
-                type="button"
-                onclick="App.refreshBalance && App.refreshBalance()"
-                class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-[13px] shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
-                aria-label="بروزرسانی موجودی"
-              >
-                🔄
-              </button>
             </div>
           </div>
 
@@ -125,7 +136,7 @@
             >
               <code
                 id="deposit-address"
-                class="text-[11px] text-slate-700 dark:text-slate-200 break-all"
+                class="text-[11px] text-slate-700 dark:text-slate-200 break-all font-en"
               ></code>
 
               <button
@@ -141,23 +152,14 @@
       </section>
 
       <!-- Actions -->
-      <section class="grid grid-cols-2 gap-2">
+      <section class="space-y-2">
         <button
           type="button"
           onclick="App.checkDeposit && App.checkDeposit()"
-          class="inline-flex items-center justify-center gap-1 rounded-full bg-emerald-500 px-2 py-2 text-[12px] font-medium text-emerald-950 shadow-sm hover:bg-emerald-600"
+          class="inline-flex w-full items-center justify-center gap-1 rounded-full bg-emerald-500 px-3 py-2 text-[12px] font-medium text-emerald-950 shadow-sm hover:bg-emerald-600"
         >
           🔄
-          <span>بررسی واریز</span>
-        </button>
-
-        <button
-          type="button"
-          onclick="App.refreshBalance && App.refreshBalance()"
-          class="inline-flex items-center justify-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-2 text-[12px] text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          💰
-          <span>بروزرسانی موجودی</span>
+          <span>بررسی واریز جدید</span>
         </button>
       </section>
 
@@ -220,7 +222,7 @@
             </label>
             <input
               id="withdrawAddress"
-              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:placeholder:text-slate-500"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:placeholder:text-slate-500 font-en"
               placeholder="مثال: one1..."
               autocomplete="off"
             />
@@ -235,7 +237,7 @@
             </label>
             <input
               id="withdrawAmount"
-              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:placeholder:text-slate-500"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:placeholder:text-slate-500 font-en"
               placeholder="مثال: 12.5"
               inputmode="decimal"
               autocomplete="off"
@@ -253,6 +255,21 @@
       </section>
     </section>
   </main>
+
+  <!-- Transaction Details Modal -->
+  <div id="tx-modal"
+      class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-5 shadow-xl border border-slate-200 dark:border-slate-700">
+      <h2 class="text-sm font-semibold mb-3">جزئیات تراکنش</h2>
+      <div id="tx-modal-content" class="text-[13px] space-y-2">
+        <!-- محتوا با JS رندر می‌شود -->
+      </div>
+      <button onclick="App.closeTxModal && App.closeTxModal()"
+              class="mt-4 w-full rounded-xl bg-slate-800 text-white py-2 text-[13px] dark:bg-slate-700">
+        بستن
+      </button>
+    </div>
+  </div>
 
   <!-- JS modules -->
   <script src="js/api.js"></script>

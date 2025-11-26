@@ -86,7 +86,7 @@
     const feeGasHtml = renderFeeGas(tx);
 
     return (
-      '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-3 shadow-sm">' +
+      '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-3 shadow-sm cursor-pointer hover:bg-slate-100/70 dark:hover:bg-slate-800/70 transition">' +
       '<div class="flex items-center justify-between gap-3">' +
       '<div class="flex items-center gap-2.5">' +
       '<div class="h-9 w-9 rounded-full ' +
@@ -153,6 +153,50 @@
     return list;
   }
 
+  function openTxModal(tx) {
+    const modal = document.getElementById("tx-modal");
+    const content = document.getElementById("tx-modal-content");
+    if (!modal || !content) return;
+
+    const timeStr = tx.timestamp
+      ? new Date(tx.timestamp).toLocaleString("fa-IR")
+      : "-";
+
+    content.innerHTML =
+      "<div><strong>نوع:</strong> " +
+      (tx.tx_type === "DEPOSIT" ? "واریز" : "برداشت") +
+      "</div>" +
+      "<div><strong>مبلغ:</strong> " +
+      tx.amount +
+      " ONE</div>" +
+      "<div><strong>زمان:</strong> " +
+      timeStr +
+      "</div>" +
+      "<div><strong>TX Hash:</strong><br>" +
+      tx.tx_hash +
+      "</div>" +
+      "<div><strong>Fee:</strong> " +
+      (tx.fee != null ? tx.fee : "نامشخص") +
+      "</div>" +
+      "<div><strong>Gas:</strong> " +
+      (tx.gas != null ? tx.gas : "نامشخص") +
+      "</div>" +
+      '<a href="' +
+      EXPLORER_URL +
+      tx.tx_hash +
+      '" target="_blank" class="inline-flex mt-2 rounded-full border border-slate-300 dark:border-slate-600 px-3 py-1 text-[12px]">' +
+      "مشاهده در Explorer" +
+      "</a>";
+
+    modal.classList.remove("hidden");
+  }
+
+  function closeTxModal() {
+    const modal = document.getElementById("tx-modal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+  }
+
   function renderHistory() {
     const listEl = document.getElementById("history-list");
     if (!listEl) return;
@@ -187,7 +231,11 @@
 
       const wrapper = document.createElement("div");
       wrapper.innerHTML = buildCardHTML(tx);
-      listEl.appendChild(wrapper.firstElementChild);
+      const card = wrapper.firstElementChild;
+      card.addEventListener("click", function () {
+        openTxModal(tx);
+      });
+      listEl.appendChild(card);
     });
   }
 
@@ -222,4 +270,6 @@
 
   App.loadHistory = loadHistory;
   App.updateHistoryUI = updateHistoryUI;
+  App.openTxModal = openTxModal;
+  App.closeTxModal = closeTxModal;
 })(window);
