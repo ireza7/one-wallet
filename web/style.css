@@ -1,15 +1,140 @@
 
-body{background:#0d1117;color:#fff;font-family:sans-serif;margin:0;padding:0;}
-.container{max-width:480px;margin:0 auto;padding:16px;}
-.card{background:#182430;padding:12px;border-radius:10px;margin-bottom:16px;}
-.actions{display:flex;gap:10px;margin-bottom:16px;}
-button{flex:1;padding:10px;border-radius:10px;border:none;background:#2d4a60;color:#fff;cursor:pointer;}
-button:hover{opacity:0.8;}
-.withdraw input{width:100%;padding:8px;margin-bottom:8px;border-radius:8px;border:none;}
+body {
+  background:#0d1117;
+  color:#fff;
+  font-family:sans-serif;
+  margin:0;
+  padding:0;
+}
 
-.hidden{display:none;}
+.container {
+  max-width:480px;
+  margin:0 auto;
+  padding:16px;
+}
 
-.history-item{padding:10px;border-bottom:1px solid #2b3a47;margin-bottom:8px;}
-.tx-deposit{color:#4ade80;}
-.tx-withdraw{color:#f87171;}
-.tx-hash{font-size:12px;opacity:0.6;}
+h2 {
+  text-align:center;
+  margin-bottom:16px;
+}
+
+.card {
+  background:#182430;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:16px;
+}
+
+/* Wallet card */
+.wallet-card {
+  padding:16px;
+  background:#1e2a38;
+}
+
+.wallet-header {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.token-logo {
+  width:40px;
+  height:40px;
+}
+
+.balance-one {
+  font-size:22px;
+  font-weight:bold;
+}
+
+.balance-usd {
+  color:#66c2ff;
+  margin-top:4px;
+}
+
+.wallet-footer {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:12px;
+  font-size:14px;
+  opacity:0.9;
+}
+
+.refresh-btn {
+  background:#234b70;
+  padding:4px 8px;
+  border:none;
+  border-radius:6px;
+  color:#fff;
+  cursor:pointer;
+}
+
+.deposit-address {
+  margin-top:14px;
+  font-size:13px;
+  opacity:0.9;
+  word-wrap:break-word;
+}
+
+.actions {
+  display:flex;
+  gap:10px;
+  margin-bottom:16px;
+}
+
+button {
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  background:#2d4a60;
+  color:#fff;
+  cursor:pointer;
+}
+
+button:hover {
+  opacity:0.85;
+}
+
+.withdraw input {
+  width:100%;
+  padding:8px;
+  margin-bottom:8px;
+  border-radius:8px;
+  border:none;
+}
+
+.hidden {
+  display:none;
+}
+
+/* History */
+.history-card {
+  max-width:480px;
+  margin:16px auto;
+}
+
+.history-item {
+  padding:10px;
+  border-bottom:1px solid #2b3a47;
+  margin-bottom:8px;
+}
+
+.tx-deposit {
+  color:#4ade80;
+}
+
+.tx-withdraw {
+  color:#f87171;
+}
+
+.tx-hash {
+  font-size:12px;
+  opacity:0.6;
+}
+
+.back-btn {
+  width:100%;
+  margin-top:10px;
+}

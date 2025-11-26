@@ -3,7 +3,7 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>Wallet App</title>
+  <title>Harmony ONE Wallet</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="loading.css">
@@ -11,33 +11,51 @@
 <body dir="rtl">
 
 <div id="loader-overlay">
- <div class="loading-spinner"></div>
- <div id="loader-status">در حال بارگذاری...</div>
- <div id="loader-error"></div>
+  <div class="loading-spinner"></div>
+  <div id="loader-status">در حال بارگذاری...</div>
+  <div id="loader-error"></div>
 </div>
 
 <div class="container" id="main-page">
- <h2>ولت Harmony ONE</h2>
- <div id="deposit-info" class="card"></div>
+  <h2>ولت Harmony ONE</h2>
 
- <div class="actions">
-   <button onclick="checkDeposit()">🔄 بررسی واریز</button>
-   <button onclick="showBalance()">💰 موجودی</button>
-   <button onclick="openHistory()">📜 تاریخچه</button>
- </div>
+  <div id="wallet-card" class="card wallet-card">
+    <div class="wallet-header">
+      <img src="one-logo.svg" class="token-logo" alt="ONE">
+      <div>
+        <div id="balance-one" class="balance-one">0 ONE</div>
+        <div id="balance-usd" class="balance-usd">$ 0.00</div>
+      </div>
+    </div>
+    <div class="wallet-footer">
+      <span>قیمت ONE:</span>
+      <span id="one-price">$0.0000</span>
+      <button class="refresh-btn" onclick="refreshBalance()">🔄</button>
+    </div>
+    <div class="deposit-address">
+      <small>آدرس واریز:</small><br>
+      <code id="deposit-address"></code>
+    </div>
+  </div>
 
- <div class="withdraw card">
-   <h3>📤 برداشت</h3>
-   <input id="withdrawAddress" placeholder="one1...">
-   <input id="withdrawAmount" placeholder="مبلغ">
-   <button onclick="withdraw()">ثبت برداشت</button>
- </div>
+  <div class="actions">
+    <button onclick="checkDeposit()">🔄 بررسی واریز</button>
+    <button onclick="showBalanceAlert()">💰 نمایش موجودی</button>
+    <button onclick="openHistory()">📜 تاریخچه</button>
+  </div>
+
+  <div class="withdraw card">
+    <h3>📤 برداشت</h3>
+    <input id="withdrawAddress" placeholder="آدرس مقصد (one1...)" />
+    <input id="withdrawAmount" placeholder="مبلغ (ONE)" />
+    <button onclick="withdraw()">ثبت برداشت</button>
+  </div>
 </div>
 
-<div id="history-page" class="hidden card">
+<div id="history-page" class="hidden card history-card">
   <h3>📜 تاریخچه تراکنش‌ها</h3>
   <div id="history-list"></div>
-  <button onclick="closeHistory()">بازگشت</button>
+  <button class="back-btn" onclick="closeHistory()">بازگشت</button>
 </div>
 
 <script src="app.js"></script>
