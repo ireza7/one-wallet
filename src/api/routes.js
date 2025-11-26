@@ -28,7 +28,35 @@ router.post('/check-deposit', parseTelegramData, async (req, res) => {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
+    // ===============================
+    // Rate Limit: 1 request per 15 sec
+    // ===============================
+    const now = Date.now();
+    const last = Number(user.last_check_deposit || 0);
+
+    const RATE_LIMIT_MS = 15000; // 15 ثانیه
+
+    if (now - last < RATE_LIMIT_MS) {
+      const wait = Math.ceil((RATE_LIMIT_MS - (now - last)) / 1000);
+      return res.json({
+        ok: false,
+        rate_limited: true,
+        wait,
+        error: `لطفاً ${wait} ثانیه صبر کنید`
+      });
+    }
+
+    // به‌روزرسانی زمان آخرین درخواست
+    await db.query(
+      "UPDATE users SET last_check_deposit = ? WHERE id = ?",
+      [now, user.id]
+    );
+
+    // ===============================
+    // ادامه فرایند sweep
+    // ===============================
     const newTxs = await sweepUserDeposits(user);
+
     res.json({
       ok: true,
       count: newTxs.length,
@@ -37,9 +65,10 @@ router.post('/check-deposit', parseTelegramData, async (req, res) => {
         ? 'واریز جدیدی یافت نشد'
         : `${newTxs.length} واریز جدید شناسایی شد`
     });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ ok: false, error: 'internal error' });
+    res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
 
