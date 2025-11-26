@@ -1,7 +1,9 @@
-// app.js (نسخه بدون صفحه لودینگ)
+// web/app.js
 
+// Telegram WebApp object (ایمن با optional chaining)
 const tg = window.Telegram?.WebApp || null;
 
+// فراخوانی API با تزریق خودکار initData
 function api(path, data) {
   const payload = Object.assign({}, data || {});
 
@@ -16,113 +18,175 @@ function api(path, data) {
   })
     .then(r => r.json())
     .catch(() => {
-      return { ok: false, error: 'network_error' };
+      return { ok: false, error: "network_error" };
     });
 }
 
-// بدون هیچ لودری
+/* ===== نوار وضعیت کوچک به جای صفحه لودینگ ===== */
+
 function setStatus(msg) {
-  console.log(msg);
+  const bar = document.getElementById("status-bar");
+  const text = document.getElementById("status-text");
+  if (!bar || !text) return;
+  text.innerText = msg;
+  bar.classList.remove("hidden");
 }
 
-// حذف کامل overlay
-function hideLoader() {}
-function showError(msg) { alert(msg); }
+function clearStatus() {
+  const bar = document.getElementById("status-bar");
+  if (!bar) return;
+  bar.classList.add("hidden");
+}
+
+function showError(msg) {
+  alert(msg);
+}
+
+/* ======================= INIT / LOGIN ======================= */
 
 async function initApp() {
   try {
+    setStatus("در حال آماده‌سازی اپلیکیشن...");
+
     if (!tg) {
-      showError("لطفاً Mini App را داخل تلگرام باز کنید.");
+      clearStatus();
+      showError("لطفاً این Mini App را از داخل تلگرام باز کنید.");
       return;
     }
 
     tg.ready?.();
 
+    setStatus("در حال شناسایی کاربر...");
+
     const initData = tg.initData;
     const unsafe = tg.initDataUnsafe;
 
     if (!unsafe?.user?.id) {
-      showError("کاربر در تلگرام شناسایی نشد.");
+      clearStatus();
+      showError("کاربر تلگرام شناسایی نشد. Mini App را از داخل ربات باز کنید.");
       return;
     }
 
-    const resp = await api('/init', { initData });
+    setStatus("در حال ورود به والت...");
+
+    const resp = await api("/init", { initData });
 
     if (!resp.ok) {
-      showError(resp.error || "خطا در ورود");
+      if (resp.error === "invalid telegram auth") {
+        showError("احراز هویت تلگرام نامعتبر است. Mini App را ببندید و دوباره از ربات باز کنید.");
+      } else if (resp.error === "network_error") {
+        showError("خطای شبکه. اتصال اینترنت یا سرور را بررسی کنید.");
+      } else {
+        showError(resp.error || "خطا در ورود");
+      }
+      clearStatus();
       return;
     }
 
-    const depositAddressEl = document.getElementById('deposit-address');
+    // مقداردهی آدرس واریز
+    const depositAddressEl = document.getElementById("deposit-address");
     if (depositAddressEl && resp.user?.deposit_address) {
       depositAddressEl.innerText = resp.user.deposit_address;
     }
 
+    setStatus("در حال دریافت موجودی...");
     await refreshBalance();
-    setInterval(refreshBalance, 15000);
+    clearStatus();
 
+    // هر ۱۵ ثانیه موجودی را رفرش کن
+    setInterval(refreshBalance, 15000);
   } catch (err) {
-    console.log(err);
-    showError("خطا در اجرای اپلیکیشن");
+    console.error(err);
+    clearStatus();
+    showError("خطا در اجرای برنامه");
   }
 }
+
+/* ==================== عملیات‌های اصلی والت ==================== */
 
 async function refreshBalance() {
   try {
     const initData = tg?.initData;
     if (!initData) return;
 
-    const res = await api('/balance', { initData });
+    const res = await api("/balance", { initData });
     if (!res.ok) return;
 
-    const balanceEl = document.getElementById('balance-one');
+    const balanceEl = document.getElementById("balance-one");
     if (balanceEl) balanceEl.innerText = res.balance + " ONE";
-  } catch {}
+
+    // اگر بعداً قیمت ONE اضافه کردی، اینجا می‌توانی USD را هم آپدیت کنی
+    // const usdEl = document.getElementById("balance-usd");
+    // ...
+  } catch {
+    // سایلنت
+  }
 }
 
 async function checkDeposit() {
   try {
     const initData = tg?.initData;
-    if (!initData) return showError("initData موجود نیست.");
+    if (!initData) {
+      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+    }
 
-    const d = await api('/check-deposit', { initData });
+    setStatus("در حال بررسی واریز...");
+    const d = await api("/check-deposit", { initData });
+    clearStatus();
 
-    if (d.rate_limited) return alert(d.error);
-    if (!d.ok) return alert(d.error || "خطا");
+    if (d.rate_limited) {
+      alert(d.error);
+      return;
+    }
+
+    if (!d.ok) {
+      alert(d.error || "خطا در بررسی واریز");
+      return;
+    }
 
     alert(d.message);
     await refreshBalance();
-
   } catch {
+    clearStatus();
     alert("خطا در بررسی واریز");
   }
 }
 
 async function showBalanceAlert() {
   const initData = tg?.initData;
-  if (!initData) return alert("initData موجود نیست.");
+  if (!initData) {
+    return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+  }
 
-  const d = await api('/balance', { initData });
+  const d = await api("/balance", { initData });
   if (d.ok) alert("موجودی شما: " + d.balance + " ONE");
 }
 
 async function withdraw() {
   try {
     const initData = tg?.initData;
-    if (!initData) return alert("initData موجود نیست.");
+    if (!initData) {
+      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+    }
 
-    const addr = document.getElementById('withdrawAddress').value.trim();
-    const amt = Number(document.getElementById('withdrawAmount').value);
+    const addr = document.getElementById("withdrawAddress").value.trim();
+    const amt = Number(document.getElementById("withdrawAmount").value);
 
-    if (!addr || !amt) return alert("اطلاعات برداشت کامل نیست.");
+    if (!addr || !amt) return alert("لطفاً اطلاعات برداشت را کامل وارد کنید.");
 
-    const d = await api('/withdraw', { initData, address: addr, amount: amt });
-    if (!d.ok) return alert(d.error || "خطای برداشت");
+    setStatus("در حال ثبت درخواست برداشت...");
+    const d = await api("/withdraw", { initData, address: addr, amount: amt });
+    clearStatus();
 
-    alert("برداشت انجام شد.\nTX: " + d.txHash);
+    if (!d.ok) {
+      alert(d.error || "خطای برداشت");
+      return;
+    }
+
+    alert("درخواست برداشت ثبت شد.\nTransaction: " + d.txHash);
     await refreshBalance();
-
   } catch {
+    clearStatus();
     alert("خطا در برداشت");
   }
 }
@@ -130,29 +194,56 @@ async function withdraw() {
 async function loadHistory() {
   try {
     const initData = tg?.initData;
-    if (!initData) return alert("initData موجود نیست.");
+    if (!initData) {
+      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+    }
 
-    const data = await api('/history', { initData });
-    if (!data.ok) return alert("خطا در دریافت تاریخچه");
+    setStatus("در حال بارگذاری تاریخچه...");
+    const data = await api("/history", { initData });
+    clearStatus();
 
-    const list = document.getElementById('history-list');
+    if (!data.ok) {
+      alert("خطا در دریافت تاریخچه");
+      return;
+    }
+
+    const list = document.getElementById("history-list");
     if (!list) return;
 
     list.innerHTML = "";
+
     data.history.forEach(tx => {
-      const item = document.createElement('div');
+      const item = document.createElement("div");
       item.className = "history-item";
       item.innerHTML = `
         <strong>${tx.tx_type}</strong><br>
         مبلغ: ${tx.amount}<br>
-        هش: ${tx.tx_hash}
+        <span class="tx-hash">${tx.tx_hash}</span>
       `;
       list.appendChild(item);
     });
-
   } catch {
-    alert("خطا در تاریخچه");
+    clearStatus();
+    alert("خطا در بارگذاری تاریخچه");
   }
 }
 
+/* =========== سوییچ بین صفحه اصلی و تاریخچه =========== */
+
+function openHistory() {
+  const main = document.getElementById("main-page");
+  const history = document.getElementById("history-page");
+  if (main) main.classList.add("hidden");
+  if (history) history.classList.remove("hidden");
+  loadHistory();
+}
+
+function closeHistory() {
+  const main = document.getElementById("main-page");
+  const history = document.getElementById("history-page");
+  if (history) history.classList.add("hidden");
+  if (main) main.classList.remove("hidden");
+}
+
+/* شروع برنامه */
 window.onload = initApp;
