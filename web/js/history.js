@@ -12,7 +12,7 @@
     const initData = tg()?.initData;
 
     if (!initData) {
-      alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+      alert("initData در دسترس نیست. لطفاً از داخل تلگرام وارد شوید.");
       return;
     }
 
@@ -26,7 +26,13 @@
     }
 
     const list = document.getElementById("history-list");
-    list.innerHTML = "";
+    list.innerHTML = ""; // پاک‌سازی قبل از رندر جدید
+
+    if (data.history.length === 0) {
+      list.innerHTML =
+        `<div class="text-center text-[13px] text-slate-500 dark:text-slate-400 py-6">تراکنشی یافت نشد</div>`;
+      return;
+    }
 
     data.history.forEach((tx) => {
       const item = document.createElement("div");
@@ -34,13 +40,14 @@
         "rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3";
 
       const amountColor =
-        tx.tx_type === "DEPOSIT"
-          ? "text-emerald-500"
-          : "text-red-400";
+        tx.tx_type === "DEPOSIT" ? "text-emerald-500" : "text-red-400";
 
       item.innerHTML = `
         <div class="flex justify-between items-center">
-          <span class="text-[13px] font-semibold text-slate-700 dark:text-slate-100">${tx.tx_type}</span>
+          <span class="text-[13px] font-semibold text-slate-700 dark:text-slate-100">
+            ${tx.tx_type === "DEPOSIT" ? "واریز (Deposit)" : "برداشت (Withdraw)"}
+          </span>
+
           <span class="text-[13px] font-medium ${amountColor}">
             ${tx.tx_type === "DEPOSIT" ? "+" : "-"}${tx.amount} ONE
           </span>
@@ -53,7 +60,7 @@
         <a
           href="${EXPLORER_URL + tx.tx_hash}"
           target="_blank"
-          class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 px-3 py-1.5 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+          class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
         >
           مشاهده در Explorer
         </a>
@@ -63,5 +70,15 @@
     });
   }
 
+  function openHistory() {
+    App.navigate("history"); // صفحه جدا
+  }
+
+  function closeHistory() {
+    App.navigate("main");
+  }
+
   App.loadHistory = loadHistory;
+  App.openHistory = openHistory;
+  App.closeHistory = closeHistory;
 })(window);
