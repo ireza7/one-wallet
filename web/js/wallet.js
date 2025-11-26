@@ -11,7 +11,7 @@
 
   async function refreshBalance() {
     try {
-      const initData = tg?.initData;
+      const initData = tg && tg.initData;
       if (!initData) return;
 
       const res = await api("/balance", { initData });
@@ -19,23 +19,26 @@
 
       const balanceEl = document.getElementById("balance-one");
       const usdEl = document.getElementById("balance-usd");
+      const priceEl = document.getElementById("one-price");
 
       if (balanceEl) balanceEl.innerText = res.balance + " ONE";
-
-      // اگر بک‌اند قیمت را بدهد، می‌توانی این را آپدیت کنی
       if (usdEl && typeof res.usd_value !== "undefined") {
         usdEl.innerText = "$ " + res.usd_value;
       }
-    } catch {
-      // سایلنت
+      if (priceEl && typeof res.price !== "undefined") {
+        priceEl.innerText = "$" + res.price;
+      }
+    } catch (e) {
+      console.warn("refreshBalance error", e);
     }
   }
 
   async function checkDeposit() {
     try {
-      const initData = tg?.initData;
+      const initData = tg && tg.initData;
       if (!initData) {
-        return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        return;
       }
 
       setStatus("در حال بررسی واریز...");
@@ -52,40 +55,33 @@
         return;
       }
 
-      alert(d.message);
+      alert(d.message || "واریز با موفقیت ثبت شد.");
       await refreshBalance();
-    } catch {
+      if (App.loadHistory) {
+        await App.loadHistory();
+      }
+    } catch (e) {
       clearStatus();
       alert("خطا در بررسی واریز");
     }
   }
 
-  async function showBalanceAlert() {
-    const initData = tg?.initData;
-    if (!initData) {
-      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
-    }
-
-    const d = await api("/balance", { initData });
-    if (d.ok) alert("موجودی شما: " + d.balance + " ONE");
-  }
-
   async function withdraw() {
     try {
-      const initData = tg?.initData;
+      const initData = tg && tg.initData;
       if (!initData) {
-        return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        return;
       }
 
-      const addr = document
-        .getElementById("withdrawAddress")
-        .value.trim();
-      const amt = Number(
-        document.getElementById("withdrawAmount").value
-      );
+      const addrEl = document.getElementById("withdrawAddress");
+      const amtEl = document.getElementById("withdrawAmount");
+      const addr = addrEl ? addrEl.value.trim() : "";
+      const amt = amtEl ? Number(amtEl.value) : 0;
 
       if (!addr || !amt) {
-        return alert("لطفاً اطلاعات برداشت را کامل وارد کنید.");
+        alert("لطفاً آدرس و مبلغ برداشت را کامل وارد کنید.");
+        return;
       }
 
       setStatus("در حال ثبت درخواست برداشت...");
@@ -101,11 +97,49 @@
         return;
       }
 
-      alert("درخواست برداشت ثبت شد.\nTransaction: " + d.txHash);
+      alert("درخواست برداشت ثبت شد.\nTransaction: " + (d.txHash || ""));
       await refreshBalance();
-    } catch {
+      if (App.loadHistory) {
+        await App.loadHistory();
+      }
+    } catch (e) {
       clearStatus();
       alert("خطا در برداشت");
+    }
+  }
+
+  function copyDepositAddress() {
+    const el = document.getElementById("deposit-address");
+    if (!el) return;
+    const text = el.innerText.trim();
+    if (!text) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        () => {
+          if (tg && tg.showPopup) {
+            tg.showPopup({ message: "آدرس کپی شد" });
+          } else {
+            alert("آدرس کپی شد");
+          }
+        },
+        () => {
+          alert("خطا در کپی آدرس");
+        }
+      );
+    } else {
+      // fallback
+      const tmp = document.createElement("textarea");
+      tmp.value = text;
+      document.body.appendChild(tmp);
+      tmp.select();
+      try {
+        document.execCommand("copy");
+        alert("آدرس کپی شد");
+      } catch (e) {
+        alert("خطا در کپی آدرس");
+      }
+      document.body.removeChild(tmp);
     }
   }
 
@@ -119,18 +153,16 @@
         return;
       }
 
-      tg.ready?.();
+      if (tg.ready) tg.ready();
 
       setStatus("در حال شناسایی کاربر...");
 
       const initData = tg.initData;
       const unsafe = tg.initDataUnsafe;
 
-      if (!unsafe?.user?.id) {
+      if (!unsafe || !unsafe.user || !unsafe.user.id) {
         clearStatus();
-        showError(
-          "کاربر تلگرام شناسایی نشد. Mini App را از داخل ربات باز کنید."
-        );
+        showError("کاربر تلگرام شناسایی نشد. Mini App را از داخل ربات باز کنید.");
         return;
       }
 
@@ -152,18 +184,22 @@
         return;
       }
 
-      // مقداردهی آدرس واریز
-      const depositAddressEl =
-        document.getElementById("deposit-address");
-      if (depositAddressEl && resp.user?.deposit_address) {
+      // deposit address
+      const depositAddressEl = document.getElementById("deposit-address");
+      if (depositAddressEl && resp.user && resp.user.deposit_address) {
         depositAddressEl.innerText = resp.user.deposit_address;
       }
 
       setStatus("در حال دریافت موجودی...");
       await refreshBalance();
+
+      if (App.loadHistory) {
+        await App.loadHistory();
+      }
+
       clearStatus();
 
-      // هر ۱۵ ثانیه موجودی را رفرش کن
+      // auto refresh balance
       setInterval(refreshBalance, 15000);
     } catch (err) {
       console.error(err);
@@ -174,7 +210,7 @@
 
   App.refreshBalance = refreshBalance;
   App.checkDeposit = checkDeposit;
-  App.showBalanceAlert = showBalanceAlert;
   App.withdraw = withdraw;
+  App.copyDepositAddress = copyDepositAddress;
   App.initApp = initApp;
 })(window);

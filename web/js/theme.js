@@ -26,23 +26,30 @@
   }
 
   function initTheme() {
-    const saved = localStorage.getItem(THEME_KEY);
-    const prefersDark = window.matchMedia?.(
-      "(prefers-color-scheme: dark)"
-    ).matches;
+    let saved = null;
+    try {
+      saved = localStorage.getItem(THEME_KEY);
+    } catch (e) {
+      saved = null;
+    }
+
+    const prefersDark =
+      global.matchMedia &&
+      global.matchMedia("(prefers-color-scheme: dark)").matches;
 
     const theme = saved || (prefersDark ? "dark" : "light");
     applyTheme(theme);
 
     const toggle = document.getElementById("theme-toggle");
     if (toggle) {
-      toggle.addEventListener("click", () => {
-        const current =
-          document.documentElement.classList.contains("dark")
-            ? "dark"
-            : "light";
+      toggle.addEventListener("click", function () {
+        const current = document.documentElement.classList.contains("dark")
+          ? "dark"
+          : "light";
         const next = current === "dark" ? "light" : "dark";
-        localStorage.setItem(THEME_KEY, next);
+        try {
+          localStorage.setItem(THEME_KEY, next);
+        } catch (e) {}
         applyTheme(next);
       });
     }
