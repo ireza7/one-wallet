@@ -1,69 +1,61 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>One Wallet - UI Redesign</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <meta charset="UTF-8">
+  <title>Harmony ONE Wallet</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans">
-  <!-- Header -->
-  <header class="bg-white shadow p-4 flex justify-between items-center">
-    <h1 class="text-xl font-bold">One Wallet</h1>
-    <nav class="space-x-4 space-x-reverse">
-      <a href="#" class="text-gray-600 hover:text-gray-800">داشبورد</a>
-      <a href="#" class="text-gray-600 hover:text-gray-800">تراکنش‌ها</a>
-      <a href="#" class="text-gray-600 hover:text-gray-800">تنظیمات</a>
-    </nav>
-  </header>
+<body dir="rtl">
 
-  <!-- Main Layout -->
-  <main class="max-w-5xl mx-auto p-4 mt-6 space-y-6">
+<div class="container" id="main-page">
+  <h2>ولت Harmony ONE</h2>
 
-    <!-- Balance Card -->
-    <section class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-lg font-semibold mb-2">موجودی کیف پول</h2>
-      <div class="text-4xl font-bold text-green-600">12,850,000 تومان</div>
-      <div class="text-gray-500 mt-2">آخرین بروزرسانی: چند لحظه پیش</div>
-    </section>
+  <!-- نوار وضعیت کوچک -->
+  <div id="status-bar" class="status-bar hidden">
+    <div class="status-spinner"></div>
+    <span id="status-text">در حال اتصال...</span>
+  </div>
 
-    <!-- Actions -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <button class="bg-blue-600 text-white p-4 rounded-xl shadow hover:bg-blue-700">افزودن وجه</button>
-      <button class="bg-green-600 text-white p-4 rounded-xl shadow hover:bg-green-700">برداشت وجه</button>
-      <button class="bg-gray-700 text-white p-4 rounded-xl shadow hover:bg-gray-800">انتقال</button>
-    </section>
+  <div id="wallet-card" class="card wallet-card">
+    <div class="wallet-header">
+      <img src="one-logo.svg" class="token-logo" alt="ONE">
+      <div>
+        <div id="balance-one" class="balance-one">0 ONE</div>
+        <div id="balance-usd" class="balance-usd">$ 0.00</div>
+      </div>
+    </div>
+    <div class="wallet-footer">
+      <span>قیمت ONE:</span>
+      <span id="one-price">$0.0000</span>
+      <button class="refresh-btn" onclick="refreshBalance()">🔄</button>
+    </div>
+    <div class="deposit-address">
+      <small>آدرس واریز:</small><br>
+      <code id="deposit-address"></code>
+    </div>
+  </div>
 
-    <!-- Transactions Table -->
-    <section class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-lg font-semibold mb-4">تراکنش‌های اخیر</h2>
-      <table class="w-full text-right border-collapse">
-        <thead>
-          <tr class="text-gray-600 border-b">
-            <th class="pb-2">تاریخ</th>
-            <th class="pb-2">نوع</th>
-            <th class="pb-2">مبلغ</th>
-            <th class="pb-2">وضعیت</th>
-          </tr>
-        </thead>
-        <tbody id="tx-table" hx-get="/api/transactions" hx-trigger="load" hx-target="#tx-table">
-          <tr>
-            <td class="py-2">1402/11/01</td>
-            <td>واریز</td>
-            <td class="text-green-600">+ 2,000,000</td>
-            <td>موفق</td>
-          </tr>
-          <tr class="bg-gray-50">
-            <td class="py-2">1402/10/28</td>
-            <td>خرید</td>
-            <td class="text-red-600">- 450,000</td>
-            <td>موفق</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+  <div class="actions">
+    <button onclick="checkDeposit()">🔄 بررسی واریز</button>
+    <button onclick="showBalanceAlert()">💰 نمایش موجودی</button>
+    <button onclick="openHistory()">📜 تاریخچه</button>
+  </div>
 
-  </main>
+  <div class="withdraw card">
+    <h3>📤 برداشت</h3>
+    <input id="withdrawAddress" placeholder="آدرس مقصد (one1...)" />
+    <input id="withdrawAmount" placeholder="مبلغ (ONE)" />
+    <button onclick="withdraw()">ثبت برداشت</button>
+  </div>
+</div>
+
+<div id="history-page" class="hidden card history-card">
+  <h3>📜 تاریخچه تراکنش‌ها</h3>
+  <div id="history-list"></div>
+  <button class="back-btn" onclick="closeHistory()">بازگشت</button>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
