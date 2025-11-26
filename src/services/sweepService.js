@@ -1,14 +1,12 @@
 const axios = require("axios");
 const db = require("../db");
 const { deriveWallet } = require("./hdWallet");
-const { sendTransaction, provider } = require("./harmonyService");
+const { sendTransaction, provider, getBalance } = require("./harmonyService");
 const { HARMONY_RPC_URL, HOT_WALLET_PRIVATE_KEY, HOT_WALLET_ADDRESS } = require("../config/env");
 const { ethers } = require("ethers");
 
 
-// ==============================================
-// گرفتن تراکنش‌های دریافتی
-// ==============================================
+// دریافت تراکنش‌های ورودی
 async function getIncomingTxs(addressOne) {
     const payload = {
         jsonrpc: "2.0",
@@ -37,68 +35,44 @@ async function getIncomingTxs(addressOne) {
 }
 
 
-// ==============================================
-// ارسال گس دینامیک به Child Wallet
-// (نسخه صحیح برای ethers.js v6)
-// ==============================================
+// ارسال گس کافی برای sweep یک‌باره
 async function sendGasToChild(childWallet) {
-    try {
-        // دریافت FeeData
-        const fee = await provider.getFeeData();
-        let gasPrice = fee.gasPrice;
+    const fee = await provider.getFeeData();
+    const gasPrice = fee.gasPrice;
+    const gasLimit = 21000n;
 
-        if (!gasPrice) {
-            throw new Error("gasPrice از RPC دریافت نشد");
-        }
+    const requiredGasWei = gasPrice * gasLimit;
+    const requiredGasONE = Number(ethers.formatEther(requiredGasWei));
 
-        const gasLimit = 21000n;
+    // افزونه امن
+    const gasToSend = requiredGasONE + 0.001;
 
-        const requiredGasWei = gasPrice * gasLimit;
-        const requiredGasONE = Number(ethers.formatEther(requiredGasWei));
+    console.log(`[Gas] GasPrice = ${ethers.formatUnits(gasPrice, "gwei")} gwei`);
+    console.log(`[Gas] Required gas ≈ ${requiredGasONE} ONE`);
+    console.log(`[Gas] Sending gas: ${gasToSend} ONE → ${childWallet.oneAddress}`);
 
-        // بافر امن
-        const gasToSend = requiredGasONE + 0.001;
-
-        console.log("------------------------------------------------------------");
-        console.log("[Gas Transfer] GasPrice:", ethers.formatUnits(gasPrice, "gwei"), "gwei");
-        console.log("[Gas Transfer] Required gas:", requiredGasONE, "ONE");
-        console.log("[Gas Transfer] Sending:", gasToSend, "ONE");
-        console.log("[Gas Transfer] To child wallet:", childWallet.oneAddress);
-        console.log("------------------------------------------------------------");
-
-        const tx = await sendTransaction(
-            HOT_WALLET_PRIVATE_KEY,
-            childWallet.oneAddress,
-            gasToSend
-        );
-
-        console.log("[Gas Transfer] TX Hash:", tx.txHash);
-
-        return tx;
-    } catch (err) {
-        console.error("ERROR sending gas to child wallet:", err);
-        throw new Error("خطا در ارسال گس به ولت کاربر");
-    }
+    return await sendTransaction(
+        HOT_WALLET_PRIVATE_KEY,
+        childWallet.oneAddress,
+        gasToSend
+    );
 }
 
 
-// ==============================================
-// Sweep تراکنش‌ها
-// ==============================================
+// Sweep فقط یک بار برای کل موجودی
 async function sweepUserDeposits(user) {
 
-    console.log(`\n===== Checking deposits for USER ${user.id} @ ${user.deposit_address} =====\n`);
+    console.log(`\n===== Checking deposits for USER ${user.id} @ ${user.deposit_address} =====`);
 
     const incoming = await getIncomingTxs(user.deposit_address);
-
     const newTxs = [];
 
+    // 1) ثبت واریزهای جدید
     for (const tx of incoming) {
         const exists = await db.query(
             "SELECT id FROM deposit_txs WHERE tx_hash = ? LIMIT 1",
             [tx.hash]
         );
-
         if (exists.length > 0) continue;
 
         await db.query(
@@ -112,65 +86,61 @@ async function sweepUserDeposits(user) {
     }
 
     if (newTxs.length === 0) {
-        console.log("No new deposits found.");
+        console.log("No new deposits.");
         return [];
     }
 
-    console.log(`Found ${newTxs.length} NEW deposit(s). Starting sweep...`);
+    console.log(`Found ${newTxs.length} NEW deposits.`);
 
+    // 2) دریافت کل موجودی child wallet
+    const childWallet = deriveWallet(user.id);
+    const totalBalance = await getBalance(childWallet.oneAddress);
 
-    for (const tx of newTxs) {
-        try {
-            const childWallet = deriveWallet(user.id);
+    console.log(`[Sweep] Child wallet balance = ${totalBalance} ONE`);
 
-            console.log(`\n--- Processing TX ${tx.hash} for user ${user.id} ---`);
-            console.log("Child wallet:", childWallet.oneAddress);
-
-            // مرحله 1 — ارسال گس کافی
-            await sendGasToChild(childWallet);
-
-            // مرحله 2 — Sweep واقعی
-            const sweepRes = await sendTransaction(
-                childWallet.privateKey,
-                HOT_WALLET_ADDRESS,
-                tx.amount
-            );
-
-            console.log("[Sweep] Success TX Hash:", sweepRes.txHash);
-
-            // مرحله 3 — بروزرسانی دیتابیس
-            await db.query(
-                "UPDATE deposit_txs SET status = 'SWEEPED' WHERE tx_hash = ?",
-                [tx.hash]
-            );
-
-            await db.query(
-                "UPDATE users SET balance = balance + ? WHERE id = ?",
-                [tx.amount, user.id]
-            );
-
-            await db.query(
-                `INSERT INTO transactions 
-                 (user_id, tx_hash, tx_type, amount, from_address, to_address, status)
-                 VALUES (?, ?, 'DEPOSIT', ?, ?, ?, 'CONFIRMED')`,
-                [user.id, sweepRes.txHash, tx.amount, user.deposit_address, HOT_WALLET_ADDRESS]
-            );
-
-        } catch (err) {
-            console.error("\n[Sweep ERROR]:", err);
-
-            await db.query(
-                "UPDATE deposit_txs SET status = 'FAILED' WHERE tx_hash = ?",
-                [tx.hash]
-            );
-        }
+    if (totalBalance <= 0) {
+        console.log("Nothing to sweep.");
+        return [];
     }
+
+    // 3) ارسال گس کافی فقط 1 بار
+    await sendGasToChild(childWallet);
+
+    // 4) اجرای sweep یک‌مرحله‌ای
+    const sweepTx = await sendTransaction(
+        childWallet.privateKey,
+        HOT_WALLET_ADDRESS,
+        totalBalance
+    );
+
+    console.log("[Sweep] TX:", sweepTx.txHash);
+
+    // 5) بروزرسانی دیتابیس
+    for (const tx of newTxs) {
+        await db.query(
+            "UPDATE deposit_txs SET status = 'SWEEPED' WHERE tx_hash = ?",
+            [tx.hash]
+        );
+    }
+
+    const sumDeposits = newTxs.reduce((acc, t) => acc + t.amount, 0);
+
+    await db.query(
+        "UPDATE users SET balance = balance + ? WHERE id = ?",
+        [sumDeposits, user.id]
+    );
+
+    await db.query(
+        `INSERT INTO transactions 
+        (user_id, tx_hash, tx_type, amount, from_address, to_address, status)
+        VALUES (?, ?, 'DEPOSIT', ?, ?, ?, 'CONFIRMED')`,
+        [user.id, sweepTx.txHash, sumDeposits, user.deposit_address, HOT_WALLET_ADDRESS]
+    );
 
     return newTxs;
 }
 
 
-// ==============================================
 module.exports = {
     sweepUserDeposits
 };
