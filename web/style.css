@@ -350,17 +350,6 @@ body {
 
 /* صفحه تاریخچه */
 
-.history-page {
-  position: fixed;
-  inset: 0;
-  padding: 16px;
-  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 30;
-}
-
 .history-card {
   width: 100%;
   max-width: 420px;
@@ -381,16 +370,37 @@ body {
   font-size: 14px;
 }
 
-/* لیست تاریخچه */
+/* صفحه تاریخچه جدید */
+.hidden-page {
+  display: none;
+}
+
+.history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
 
 .history-list {
-  margin-top: 4px;
-  padding-right: 2px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   overflow-y: auto;
-  max-height: 52vh;
+  max-height: 60vh;
 }
 
 .history-item {
@@ -399,20 +409,12 @@ body {
   border: 1px solid rgba(55, 65, 81, 0.9);
   padding: 8px 9px;
   font-size: 12px;
-  line-height: 1.5;
 }
 
-.history-item strong {
-  display: inline-block;
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-
-.history-item .tx-hash {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+.tx-hash {
+  font-family: monospace;
   font-size: 10px;
   color: var(--text-muted);
-  word-break: break-all;
 }
 
 /* حالت مخفی */

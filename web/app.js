@@ -231,19 +231,16 @@ async function loadHistory() {
 /* =========== سوییچ بین صفحه اصلی و تاریخچه =========== */
 
 function openHistory() {
-  const main = document.getElementById("main-page");
-  const history = document.getElementById("history-page");
-  if (main) main.classList.add("hidden");
-  if (history) history.classList.remove("hidden");
+  document.getElementById("main-page")?.classList.add("hidden-page");
+  document.getElementById("history-page")?.classList.remove("hidden-page");
   loadHistory();
 }
 
 function closeHistory() {
-  const main = document.getElementById("main-page");
-  const history = document.getElementById("history-page");
-  if (history) history.classList.add("hidden");
-  if (main) main.classList.remove("hidden");
+  document.getElementById("history-page")?.classList.add("hidden-page");
+  document.getElementById("main-page")?.classList.remove("hidden-page");
 }
+
 
 /* شروع برنامه */
 window.onload = initApp;
