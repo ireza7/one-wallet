@@ -36,7 +36,7 @@
       const data = await res.json();
 
       if (data && data.price) {
-        const priceEl = document.getElementById("one-price");
+        const priceEl = document.getElementById("coin-price");
         if (priceEl) priceEl.innerText = "$" + Number(data.price).toFixed(4);
       }
     } catch (e) {
