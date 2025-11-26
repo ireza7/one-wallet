@@ -1,5 +1,14 @@
 // web/app.js
-const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+let tg = null;
+
+try {
+  if (window.Telegram && window.Telegram.WebApp) {
+    tg = window.Telegram.WebApp;
+  }
+} catch (e) {
+  tg = null;
+}
+
 
 function api(path, data) {
   const payload = Object.assign({}, data || {});
