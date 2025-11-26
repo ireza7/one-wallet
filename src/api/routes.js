@@ -1,3 +1,4 @@
+// src/api/routes.js
 const express = require('express');
 const crypto = require('crypto');
 
@@ -10,50 +11,79 @@ const { requestWithdraw } = require('../services/withdrawService');
 const BOT_TOKEN = process.env.TG_BOT_TOKEN;
 const MAX_INITDATA_AGE = 24 * 60 * 60; // 24 ساعت
 
-function safeEqual(a, b) {
-  const aBuf = Buffer.from(a, 'hex');
-  const bBuf = Buffer.from(b, 'hex');
+function isHex64(str) {
+  return typeof str === 'string' && /^[0-9a-f]{64}$/i.test(str);
+}
+
+function safeEqualHex(aHex, bHex) {
+  if (!isHex64(aHex) || !isHex64(bHex)) return false;
+  const aBuf = Buffer.from(aHex, 'hex');
+  const bBuf = Buffer.from(bHex, 'hex');
   if (aBuf.length !== bBuf.length) return false;
   return crypto.timingSafeEqual(aBuf, bBuf);
 }
 
 function validateTelegramInitData(initData) {
-  if (!initData || !BOT_TOKEN) return null;
+  if (!initData || !BOT_TOKEN) {
+    return null;
+  }
 
-  const params = new URLSearchParams(initData);
+  let params;
+  try {
+    params = new URLSearchParams(initData);
+  } catch {
+    return null;
+  }
+
   const hash = params.get('hash');
-  if (!hash) return null;
+  if (!hash) {
+    return null;
+  }
 
+  // طبق داک رسمی، hash از روی سایر فیلدها محاسبه می‌شود
   params.delete('hash');
 
   const dataCheckArr = [];
   for (const [key, value] of params.entries()) {
-    const decoded = decodeURIComponent(value);
-    dataCheckArr.push(`${key}=${decoded}`);
+    // URLSearchParams خودش decode می‌کند، دوباره decode نکن
+    // دقیقا key=value را جمع می‌کنیم
+    dataCheckArr.push(`${key}=${value}`);
   }
   dataCheckArr.sort();
   const dataCheckString = dataCheckArr.join('\n');
 
+  // secret_key = HMAC_SHA256("WebAppData", BOT_TOKEN)
   const secretKey = crypto
     .createHmac('sha256', 'WebAppData')
     .update(BOT_TOKEN)
     .digest();
 
+  // computed_hash = HMAC_SHA256(secret_key, data_check_string)
   const hmac = crypto
     .createHmac('sha256', secretKey)
     .update(dataCheckString)
     .digest('hex');
 
-  if (!safeEqual(hmac, hash)) return null;
+  if (!safeEqualHex(hmac, hash)) {
+    return null;
+  }
 
   const authDateStr = params.get('auth_date');
   const authDate = authDateStr ? Number(authDateStr) : 0;
   const nowSec = Math.floor(Date.now() / 1000);
 
-  if (!authDate || nowSec - authDate > MAX_INITDATA_AGE) return null;
+  if (!authDate || !Number.isFinite(authDate)) {
+    return null;
+  }
+
+  if (nowSec - authDate > MAX_INITDATA_AGE) {
+    return null;
+  }
 
   const userJson = params.get('user');
-  if (!userJson) return null;
+  if (!userJson) {
+    return null;
+  }
 
   let user;
   try {
@@ -62,7 +92,9 @@ function validateTelegramInitData(initData) {
     return null;
   }
 
-  if (!user.id) return null;
+  if (!user || !user.id) {
+    return null;
+  }
 
   return user;
 }
@@ -70,19 +102,22 @@ function validateTelegramInitData(initData) {
 function telegramAuth(req, res, next) {
   try {
     // initData می‌تواند از کلاینت با نام‌های مختلف ارسال شده باشد
-    let initData = req.body && (req.body.initData || req.body.init_data || req.body.init);
-    if (!initData && typeof req.query.initData === 'string') {
-      initData = req.query.initData;
-    }
+    let initData =
+      (req.body && (req.body.initData || req.body.init_data || req.body.init)) ||
+      (typeof req.query.initData === 'string' ? req.query.initData : null);
 
     const user = validateTelegramInitData(initData);
+
     if (!user) {
+      // برای دیباگ: می‌توانی این لاگ را فعال کنی
+      // console.warn('Invalid Telegram auth. initData=', initData);
       return res.status(401).json({ ok: false, error: 'invalid telegram auth' });
     }
 
     req.telegramUser = user;
     next();
   } catch (err) {
+    // console.error('telegramAuth error:', err);
     return res.status(401).json({ ok: false, error: 'invalid telegram auth' });
   }
 }
@@ -92,9 +127,10 @@ function telegramAuth(req, res, next) {
 router.post('/init', telegramAuth, async (req, res) => {
   try {
     const user = await findOrCreateUserByTelegram(req.telegramUser);
-    res.json({ ok: true, user });
-  } catch {
-    res.status(500).json({ ok: false, error: 'internal_error' });
+    return res.json({ ok: true, user });
+  } catch (err) {
+    // console.error('init error:', err);
+    return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
 
@@ -120,7 +156,7 @@ router.post('/check-deposit', telegramAuth, async (req, res) => {
     await db.query("UPDATE users SET last_check_deposit = ? WHERE id = ?", [now, user.id]);
 
     const newTxs = await sweepUserDeposits(user);
-    res.json({
+    return res.json({
       ok: true,
       count: newTxs.length,
       txs: newTxs,
@@ -128,8 +164,9 @@ router.post('/check-deposit', telegramAuth, async (req, res) => {
         ? 'واریز جدیدی یافت نشد'
         : `${newTxs.length} واریز جدید شناسایی شد`
     });
-  } catch {
-    res.status(500).json({ ok: false, error: 'internal_error' });
+  } catch (err) {
+    // console.error('check-deposit error:', err);
+    return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
 
@@ -137,9 +174,10 @@ router.post('/balance', telegramAuth, async (req, res) => {
   try {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
-    res.json({ ok: true, balance: user.balance });
-  } catch {
-    res.status(500).json({ ok: false, error: 'internal_error' });
+    return res.json({ ok: true, balance: user.balance });
+  } catch (err) {
+    // console.error('balance error:', err);
+    return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
 
@@ -151,9 +189,9 @@ router.post('/withdraw', telegramAuth, async (req, res) => {
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
     const result = await requestWithdraw(user, address, Number(amount));
-    res.json({ ok: true, requestId: result.requestId, txHash: result.txHash });
+    return res.json({ ok: true, requestId: result.requestId, txHash: result.txHash });
   } catch (err) {
-    res.status(400).json({ ok: false, error: err.message });
+    return res.status(400).json({ ok: false, error: err.message });
   }
 });
 
@@ -162,14 +200,16 @@ router.post('/history', telegramAuth, async (req, res) => {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
+    // توجه: در schema.sql جدول transactions تعریف شده، نه tx_history
     const rows = await db.query(
-      "SELECT * FROM tx_history WHERE user_id = ? ORDER BY id DESC LIMIT 50",
+      "SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 50",
       [user.id]
     );
 
-    res.json({ ok: true, history: rows });
-  } catch {
-    res.status(500).json({ ok: false, error: 'internal_error' });
+    return res.json({ ok: true, history: rows });
+  } catch (err) {
+    // console.error('history error:', err);
+    return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
 

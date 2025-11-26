@@ -1,7 +1,9 @@
+// web/app.js
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
 function api(path, data) {
   const payload = Object.assign({}, data || {});
+
   // به صورت پیش‌فرض initData را از Telegram WebApp اضافه می‌کنیم
   if (!payload.initData && tg && tg.initData) {
     payload.initData = tg.initData;
@@ -11,7 +13,11 @@ function api(path, data) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
-  }).then(r => r.json());
+  })
+    .then(r => r.json())
+    .catch(() => {
+      return { ok: false, error: 'network_error' };
+    });
 }
 
 function setStatus(msg) {
@@ -31,7 +37,9 @@ function hideLoader() {
 async function initApp() {
   try {
     if (!tg) {
+      setStatus("عدم دسترسی به Telegram WebApp");
       showError("لطفاً این Mini App را از داخل تلگرام باز کنید.");
+      hideLoader();
       return;
     }
 
@@ -43,7 +51,9 @@ async function initApp() {
     const unsafe = tg.initDataUnsafe;
 
     if (!unsafe || !unsafe.user || !unsafe.user.id) {
+      setStatus("اطلاعات کاربر یافت نشد");
       showError("Mini App را از داخل ربات باز کنید.");
+      hideLoader();
       return;
     }
 
@@ -52,39 +62,66 @@ async function initApp() {
     const resp = await api('/init', { initData });
 
     if (!resp.ok) {
-      showError(resp.error || 'خطا در ورود');
+      setStatus("خطا در ورود");
+      if (resp.error === 'invalid telegram auth') {
+        showError("احراز هویت تلگرام نامعتبر است. Mini App را ببندید و دوباره از ربات باز کنید.");
+      } else if (resp.error === 'network_error') {
+        showError("خطای شبکه. اتصال اینترنت یا سرور را بررسی کنید.");
+      } else {
+        showError(resp.error || 'خطا در ورود');
+      }
+      hideLoader();
       return;
     }
 
-    document.getElementById('deposit-address').innerText = resp.user.deposit_address;
+    const depositAddressEl = document.getElementById('deposit-address');
+    if (depositAddressEl && resp.user && resp.user.deposit_address) {
+      depositAddressEl.innerText = resp.user.deposit_address;
+    }
 
     hideLoader();
+
     await refreshBalance();
     setInterval(refreshBalance, 15000);
   } catch (err) {
+    setStatus("خطای داخلی برنامه");
     showError("خطا در اجرای برنامه");
+    hideLoader();
   }
 }
 
 async function refreshBalance() {
   try {
-    const initData = tg.initData;
+    const initData = tg && tg.initData;
+    if (!initData) return;
+
     const res = await api('/balance', { initData });
 
     if (!res.ok) return;
 
     const balanceEl = document.getElementById('balance-one');
     if (balanceEl) balanceEl.innerText = res.balance + " ONE";
-  } catch { }
+  } catch {
+    // سایلنت
+  }
 }
 
 async function checkDeposit() {
   try {
-    const initData = tg.initData;
+    const initData = tg && tg.initData;
+    if (!initData) {
+      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+    }
+
     const d = await api('/check-deposit', { initData });
 
     if (d.rate_limited) {
       alert(d.error);
+      return;
+    }
+
+    if (!d.ok) {
+      alert(d.error || "خطا در بررسی واریز");
       return;
     }
 
@@ -96,15 +133,22 @@ async function checkDeposit() {
 }
 
 async function showBalanceAlert() {
-  const initData = tg.initData;
+  const initData = tg && tg.initData;
+  if (!initData) {
+    return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+  }
+
   const d = await api('/balance', { initData });
 
-  if (d.ok) alert("موجودی شما: " + d.balance + " TON");
+  if (d.ok) alert("موجودی شما: " + d.balance + " ONE");
 }
 
 async function withdraw() {
   try {
-    const initData = tg.initData;
+    const initData = tg && tg.initData;
+    if (!initData) {
+      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+    }
 
     const addr = document.getElementById('withdrawAddress').value.trim();
     const amt = Number(document.getElementById('withdrawAmount').value);
@@ -128,7 +172,11 @@ async function withdraw() {
 
 async function loadHistory() {
   try {
-    const initData = tg.initData;
+    const initData = tg && tg.initData;
+    if (!initData) {
+      return alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+    }
+
     const data = await api('/history', { initData });
 
     if (!data.ok) {
@@ -137,13 +185,15 @@ async function loadHistory() {
     }
 
     const list = document.getElementById('history-list');
+    if (!list) return;
+
     list.innerHTML = "";
 
     data.history.forEach(tx => {
       const item = document.createElement('div');
       item.className = "history-item";
       item.innerHTML = `
-        <strong>${tx.type}</strong><br>
+        <strong>${tx.tx_type}</strong><br>
         مبلغ: ${tx.amount}<br>
         هش: ${tx.tx_hash}
       `;
