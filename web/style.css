@@ -1,5 +1,15 @@
+
 body{background:#0d1117;color:#fff;font-family:sans-serif;margin:0;padding:0;}
 .container{max-width:480px;margin:0 auto;padding:16px;}
 .card{background:#182430;padding:12px;border-radius:10px;margin-bottom:16px;}
-.actions{display:flex;gap:10px;}
-button{flex:1;padding:10px;border-radius:10px;border:none;}
+.actions{display:flex;gap:10px;margin-bottom:16px;}
+button{flex:1;padding:10px;border-radius:10px;border:none;background:#2d4a60;color:#fff;cursor:pointer;}
+button:hover{opacity:0.8;}
+.withdraw input{width:100%;padding:8px;margin-bottom:8px;border-radius:8px;border:none;}
+
+.hidden{display:none;}
+
+.history-item{padding:10px;border-bottom:1px solid #2b3a47;margin-bottom:8px;}
+.tx-deposit{color:#4ade80;}
+.tx-withdraw{color:#f87171;}
+.tx-hash{font-size:12px;opacity:0.6;}
