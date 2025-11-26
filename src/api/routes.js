@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const db = require("../db/index");
 const { findOrCreateUserByTelegram, getUserByTelegramId } = require('../services/userService');
 const { sweepUserDeposits } = require('../services/sweepService');
 const { requestWithdraw } = require('../services/withdrawService');
