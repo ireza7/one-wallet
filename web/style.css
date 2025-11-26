@@ -1,425 +1,450 @@
-/* Reset ساده و تم کلی */
+/* ریست و تم کلی */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
+html,
+body {
   margin: 0;
   padding: 0;
+  height: 100%;
+}
+
+:root {
+  --bg: #020617;
+  --bg-elevated: #020617;
+  --bg-card: #020617;
+  --border-subtle: rgba(148, 163, 184, 0.3);
+  --primary: #22c55e;
+  --primary-soft: rgba(34, 197, 94, 0.1);
+  --primary-strong: #16a34a;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --danger: #f97373;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.75);
 }
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
-  color: #e5e7eb;
+  background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 100%);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* شِل اپلیکیشن */
+
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.app-layout {
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* هدر */
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 2px 4px 2px;
+}
+
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 25% 0%, #4ade80, #16a34a 50%, #14532d 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  direction: rtl;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #ecfdf5;
 }
 
-/* کلاس جنریک برای پنهان‌سازی که JS استفاده می‌کند */
-.hidden {
-  display: none !important;
-}
-
-/* ظرف اصلی مینی‌اپ / صفحه اصلی */
-.container {
-  width: 100%;
-  max-width: 480px;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.82));
-  border-radius: 24px;
-  padding: 18px 16px 20px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow:
-    0 24px 50px rgba(15, 23, 42, 0.9),
-    0 0 0 1px rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  animation: card-enter 0.25s ease-out;
-}
-
-/* تیتر ولت */
-.container > h2 {
-  font-size: 18px;
+.app-title-text h1 {
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
-  margin: 0 0 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #f9fafb;
 }
 
-/* نوار وضعیت بالا (در حال اتصال، در حال لود و …) */
+.app-title-text p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* کارت اصلی */
+
+.main-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* نوار وضعیت */
+
 .status-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(15, 23, 42, 0.98);
-  border-radius: 999px;
-  padding: 6px 10px;
-  margin-bottom: 12px;
   font-size: 12px;
-  color: #e5e7eb;
-  border: 1px solid rgba(55, 65, 81, 0.8);
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  backdrop-filter: blur(16px);
 }
 
 .status-spinner {
   width: 14px;
   height: 14px;
-  border-radius: 50%;
-  border: 2px solid #ffffff30;
-  border-top-color: #60a5fa;
-  animation: status-spin 0.8s linear infinite;
+  border-radius: 999px;
+  border: 2px solid rgba(148, 163, 184, 0.4);
+  border-top-color: var(--primary);
+  animation: spin 0.9s linear infinite;
 }
 
-/* کارت کلی ولت / بالانس */
+/* کارت‌ها */
+
 .card {
-  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), rgba(15, 23, 42, 0.98));
-  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
   padding: 14px 14px 16px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow:
-    0 18px 45px rgba(15, 23, 42, 0.85),
-    0 0 0 1px rgba(15, 23, 42, 0.9);
 }
 
-/* کارت ولت بالانس */
+/* کارت ولت */
+
 .wallet-card {
-  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .wallet-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
 }
 
-.wallet-header > div {
+.token-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  padding: 4px;
+  background: radial-gradient(circle at 30% 0, #4ade80, #16a34a 45%, #14532d 100%);
+}
+
+.wallet-balance {
+  display: flex;
+  flex-direction: column;
+}
+
+.balance-one {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.balance-usd {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.wallet-footer {
+  border-top: 1px solid rgba(31, 41, 55, 0.9);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wallet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wallet-row-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.price {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.deposit-address {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-/* لوگوی توکن */
-.token-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 30% 0%, #7dd3fc 0, #38bdf8 40%, #0ea5e9 100%);
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.9),
-    0 10px 20px rgba(8, 47, 73, 0.9);
-}
-
-/* بالانس */
-.balance-one {
-  font-size: 20px;
-  font-weight: 600;
-  color: #f9fafb;
-}
-
-.balance-usd {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-/* بخش قیمت و رفرش پایین کارت ولت */
-.wallet-footer {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed rgba(148, 163, 184, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.wallet-footer span:first-child {
-  opacity: 0.9;
-}
-
-.wallet-footer span#one-price {
-  font-weight: 500;
-  color: #f9fafb;
-}
-
-/* دکمه کوچک رفرش قیمت */
-.refresh-btn {
-  border: none;
-  outline: none;
-  cursor: pointer;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at top, #1d4ed8, #0f172a);
-  color: #e5e7eb;
-  box-shadow: 0 8px 18px rgba(30, 64, 175, 0.7);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-}
-
-.refresh-btn:active {
-  transform: translateY(1px) scale(0.96);
-  box-shadow: 0 4px 10px rgba(30, 64, 175, 0.7);
-}
-
-/* آدرس واریز */
-.deposit-address {
-  margin-top: 10px;
-  padding: 8px 10px;
-  background: rgba(15, 23, 42, 0.9);
-  border-radius: 12px;
-  border: 1px dashed rgba(148, 163, 184, 0.6);
+.address {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 11px;
-  color: #e5e7eb;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px dashed rgba(148, 163, 184, 0.55);
   word-break: break-all;
 }
 
-.deposit-address small {
-  color: #9ca3af;
-}
+/* اکشن‌ها */
 
-.deposit-address code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 11px;
-}
-
-/* دکمه‌های اکشن اصلی (بررسی واریز، نمایش موجودی، تاریخچه) */
 .actions {
-  margin-top: 14px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
-.actions button {
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 10px 4px;
+/* دکمه‌ها */
+
+.btn {
   border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 9px 10px;
   font-size: 13px;
   font-weight: 500;
-  color: #e5e7eb;
-  background: linear-gradient(135deg, #1d4ed8, #7c3aed);
-  box-shadow: 0 14px 30px rgba(59, 130, 246, 0.55);
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    filter 0.12s ease,
-    background 0.12s ease;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.08s ease, box-shadow 0.16s ease;
   white-space: nowrap;
 }
 
-.actions button:nth-child(2) {
-  background: linear-gradient(135deg, #0d9488, #22c55e);
-  box-shadow: 0 14px 30px rgba(16, 185, 129, 0.55);
+.btn.primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  border-color: rgba(34, 197, 94, 0.9);
+  color: #022c22;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.35);
 }
 
-.actions button:nth-child(3) {
-  background: linear-gradient(135deg, #4b5563, #6b7280);
-  box-shadow: 0 14px 30px rgba(75, 85, 99, 0.55);
+.btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.4);
 }
 
-.actions button:active {
-  transform: translateY(1px) scale(0.96);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.9);
-  filter: brightness(0.98);
+.btn.ghost {
+  border-color: rgba(55, 65, 81, 0.9);
+  background: rgba(15, 23, 42, 0.75);
 }
 
-/* فرم برداشت */
-.withdraw {
-  margin-top: 14px;
+.btn.ghost:hover {
+  background: rgba(31, 41, 55, 0.95);
 }
 
-.withdraw h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  font-weight: 600;
+.btn.full-width {
+  width: 100%;
+}
+
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(75, 85, 99, 0.8);
+  background: rgba(15, 23, 42, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.08s ease;
   color: #e5e7eb;
 }
 
-/* ورودی‌های برداشت */
-.withdraw input {
-  width: 100%;
-  margin-top: 8px;
-  padding: 9px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(55, 65, 81, 0.9);
-  background: #020617;
-  color: #f9fafb;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+.icon-btn:hover {
+  background: rgba(31, 41, 55, 1);
+  transform: translateY(-1px);
 }
 
-.withdraw input::placeholder {
-  color: #6b7280;
-}
+/* برداشت */
 
-.withdraw input:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.7);
-  background: #020617;
-}
-
-/* دکمه برداشت */
-.withdraw button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 999px;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #f97316, #ec4899);
-  color: #111827;
-  box-shadow: 0 18px 40px rgba(248, 113, 113, 0.7);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
-}
-
-.withdraw button:active {
-  transform: translateY(1px) scale(0.96);
-  box-shadow: 0 10px 24px rgba(248, 113, 113, 0.7);
-  filter: brightness(0.97);
-}
-
-/* صفحه تاریخچه به شکل اسکرین جداگانه */
-#history-page {
-  position: fixed;
-  inset: 0;
-  padding: 18px 16px 22px;
-  background:
-    radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 1));
+.withdraw {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  z-index: 50;
-  animation: screen-enter 0.25s ease-out;
+  gap: 10px;
 }
 
-/* همان کلاس card روی history-page هم هست، کمی override می‌کنیم */
+.section-header h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.section-header p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.field input {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background: rgba(15, 23, 42, 0.98);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.field input::placeholder {
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.field input:focus {
+  border-color: rgba(34, 197, 94, 0.85);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.65);
+  background: rgba(15, 23, 42, 1);
+}
+
+/* صفحه تاریخچه */
+
+.history-page {
+  position: fixed;
+  inset: 0;
+  padding: 16px;
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 30;
+}
+
 .history-card {
-  max-width: 480px;
   width: 100%;
-  margin: 0 auto;
-  border-radius: 22px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
-  padding: 16px 14px 14px;
-  box-shadow:
-    0 24px 45px rgba(15, 23, 42, 0.9),
-    0 0 0 1px rgba(15, 23, 42, 0.9);
+  max-width: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-#history-page h3 {
-  margin: 0 0 10px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #f9fafb;
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-header h2 {
+  margin: 0;
+  font-size: 14px;
 }
 
 /* لیست تاریخچه */
-#history-list {
-  max-height: 320px;
+
+.history-list {
+  margin-top: 4px;
+  padding-right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   overflow-y: auto;
-  padding-right: 4px;
-  margin-bottom: 10px;
+  max-height: 52vh;
+}
+
+.history-item {
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  padding: 8px 9px;
   font-size: 12px;
-  color: #e5e7eb;
+  line-height: 1.5;
 }
 
-/* اگر آیتم‌هایی با کلاس خاص ایجاد کردی، اینجا می‌توانی بیشتر استایل بدهی */
-/* مثال:
-#history-list .item { ... }
-*/
-
-/* دکمه بازگشت */
-.back-btn {
-  width: 100%;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 9px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  transition: background 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+.history-item strong {
+  display: inline-block;
+  font-size: 12px;
+  margin-bottom: 2px;
 }
 
-.back-btn:active {
-  transform: translateY(1px) scale(0.97);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.9);
-  background: rgba(15, 23, 42, 0.98);
+.history-item .tx-hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  word-break: break-all;
 }
 
-/* اسکرول‌بار نازک برای تاریخچه (جاهای پشتیبانی‌شده) */
-#history-list::-webkit-scrollbar {
-  width: 4px;
-}
+/* حالت مخفی */
 
-#history-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-#history-list::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.7);
-  border-radius: 999px;
+.hidden {
+  display: none !important;
 }
 
 /* انیمیشن‌ها */
-@keyframes status-spin {
-  from { transform: rotate(0); }
-  to   { transform: rotate(360deg); }
-}
 
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
+@keyframes spin {
   to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: rotate(360deg);
   }
 }
 
-@keyframes screen-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* ریسپانسیو */
 
-/* ریسپانسیو کوچک‌ترها (اگر صفحه خیلی باریک شود) */
-@media (max-width: 360px) {
+@media (max-width: 380px) {
+  .app-shell {
+    padding: 10px;
+  }
+
   .actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .actions button {
+  .btn {
     font-size: 12px;
+  }
+
+  .balance-one {
+    font-size: 18px;
   }
 }

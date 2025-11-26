@@ -3,59 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <title>Harmony ONE Wallet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body dir="rtl">
+  <main class="app-shell">
+    <section class="app-layout">
 
-<div class="container" id="main-page">
-  <h2>ولت Harmony ONE</h2>
+      <header class="app-header">
+        <div class="app-title">
+          <div class="app-logo">ONE</div>
+          <div class="app-title-text">
+            <h1>ولت Harmony ONE</h1>
+            <p>کیف‌پول ساده و امن داخل تلگرام</p>
+          </div>
+        </div>
+      </header>
 
-  <!-- نوار وضعیت کوچک -->
-  <div id="status-bar" class="status-bar hidden">
-    <div class="status-spinner"></div>
-    <span id="status-text">در حال اتصال...</span>
-  </div>
+      <section id="main-page" class="main-card">
 
-  <div id="wallet-card" class="card wallet-card">
-    <div class="wallet-header">
-      <img src="one-logo.svg" class="token-logo" alt="ONE">
-      <div>
-        <div id="balance-one" class="balance-one">0 ONE</div>
-        <div id="balance-usd" class="balance-usd">$ 0.00</div>
-      </div>
-    </div>
-    <div class="wallet-footer">
-      <span>قیمت ONE:</span>
-      <span id="one-price">$0.0000</span>
-      <button class="refresh-btn" onclick="refreshBalance()">🔄</button>
-    </div>
-    <div class="deposit-address">
-      <small>آدرس واریز:</small><br>
-      <code id="deposit-address"></code>
-    </div>
-  </div>
+        <!-- نوار وضعیت -->
+        <div id="status-bar" class="status-bar hidden">
+          <div class="status-spinner"></div>
+          <span id="status-text">در حال اتصال…</span>
+        </div>
 
-  <div class="actions">
-    <button onclick="checkDeposit()">🔄 بررسی واریز</button>
-    <button onclick="showBalanceAlert()">💰 نمایش موجودی</button>
-    <button onclick="openHistory()">📜 تاریخچه</button>
-  </div>
+        <!-- کارت ولت -->
+        <section id="wallet-card" class="card wallet-card">
+          <div class="wallet-header">
+            <img src="one-logo.svg" class="token-logo" alt="ONE">
+            <div class="wallet-balance">
+              <div id="balance-one" class="balance-one">0 ONE</div>
+              <div id="balance-usd" class="balance-usd">$ 0.00</div>
+            </div>
+          </div>
 
-  <div class="withdraw card">
-    <h3>📤 برداشت</h3>
-    <input id="withdrawAddress" placeholder="آدرس مقصد (one1...)" />
-    <input id="withdrawAmount" placeholder="مبلغ (ONE)" />
-    <button onclick="withdraw()">ثبت برداشت</button>
-  </div>
-</div>
+          <div class="wallet-footer">
+            <div class="wallet-row">
+              <span class="label">قیمت ONE</span>
+              <div class="wallet-row-right">
+                <span id="one-price" class="price">$0.0000</span>
+                <button class="icon-btn" type="button" onclick="refreshBalance()" aria-label="بروزرسانی موجودی">
+                  🔄
+                </button>
+              </div>
+            </div>
 
-<div id="history-page" class="hidden card history-card">
-  <h3>📜 تاریخچه تراکنش‌ها</h3>
-  <div id="history-list"></div>
-  <button class="back-btn" onclick="closeHistory()">بازگشت</button>
-</div>
+            <div class="deposit-address">
+              <div class="label-row">
+                <span class="label">آدرس واریز</span>
+              </div>
+              <code id="deposit-address" class="address"></code>
+            </div>
+          </div>
+        </section>
 
-<script src="app.js"></script>
+        <!-- اکشن‌ها -->
+        <section class="actions">
+          <button type="button" class="btn primary" onclick="checkDeposit()">
+            🔄 بررسی واریز
+          </button>
+          <button type="button" class="btn ghost" onclick="showBalanceAlert()">
+            💰 نمایش موجودی
+          </button>
+          <button type="button" class="btn ghost" onclick="openHistory()">
+            📜 تاریخچه
+          </button>
+        </section>
+
+        <!-- برداشت -->
+        <section class="card withdraw">
+          <div class="section-header">
+            <h2>📤 درخواست برداشت</h2>
+            <p>ONE را به ولت دلخواه خود منتقل کنید.</p>
+          </div>
+
+          <div class="field">
+            <label for="withdrawAddress">آدرس مقصد</label>
+            <input
+              id="withdrawAddress"
+              placeholder="مثال: one1..."
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="field">
+            <label for="withdrawAmount">مبلغ (ONE)</label>
+            <input
+              id="withdrawAmount"
+              placeholder="مثال: 12.5"
+              inputmode="decimal"
+              autocomplete="off"
+            />
+          </div>
+
+          <button type="button" class="btn primary full-width" onclick="withdraw()">
+            ثبت درخواست برداشت
+          </button>
+        </section>
+
+      </section>
+
+      <!-- صفحه تاریخچه -->
+      <section id="history-page" class="history-page hidden">
+        <div class="card history-card">
+          <header class="history-header">
+            <button class="icon-btn" type="button" onclick="closeHistory()">
+              ←
+            </button>
+            <h2>📜 تاریخچه تراکنش‌ها</h2>
+          </header>
+
+          <div id="history-list" class="history-list">
+            <!-- آیتم‌ها با JS اضافه می‌شوند -->
+          </div>
+
+          <button class="btn ghost full-width" type="button" onclick="closeHistory()">
+            بازگشت
+          </button>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
