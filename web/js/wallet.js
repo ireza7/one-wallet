@@ -9,6 +9,20 @@
   const clearStatus = App.clearStatus;
   const showError = App.showError;
 
+  App.lastBalance = 0;
+  App.latestPrice = 0;
+
+  function updateFiatValue() {
+    const usdEl = document.getElementById("balance-usd");
+    if (!usdEl) return;
+    if (!App.lastBalance || !App.latestPrice) {
+      usdEl.innerText = "$ 0.00";
+      return;
+    }
+    const usd = (Number(App.lastBalance) * Number(App.latestPrice)).toFixed(2);
+    usdEl.innerText = "$ " + usd;
+  }
+
   async function refreshBalance() {
     try {
       const initData = tg && tg.initData;
@@ -18,35 +32,53 @@
       if (!res.ok) return;
 
       const balanceEl = document.getElementById("balance-one");
-      const usdEl = document.getElementById("balance-usd");
+
+      App.lastBalance = res.balance || 0;
 
       if (balanceEl) balanceEl.innerText = res.balance + " ONE";
-      if (usdEl && typeof res.usd_value !== "undefined") {
-        usdEl.innerText = "$ " + res.usd_value;
-      }
+
+      updateFiatValue();
     } catch (e) {
       console.warn("refreshBalance error", e);
     }
   }
 
-  // Fetch ONE price from Harmony explorer official API
+  // Fetch ONE price & logo from Harmony explorer official API
   async function fetchOnePrice() {
     try {
       const res = await fetch("https://explorer.harmony.one/api/v2/stats");
       const data = await res.json();
 
-      // قیمت واقعی از API رسمی
       if (data && data.coin_price) {
+        App.latestPrice = Number(data.coin_price);
         const priceEl = document.getElementById("one-price");
         if (priceEl) {
-          priceEl.innerText = "$" + Number(data.coin_price).toFixed(6);
+          priceEl.innerText = "$" + App.latestPrice.toFixed(6);
+        }
+
+        const changeEl = document.getElementById("one-price-change");
+        if (changeEl && typeof data.coin_price_change_percentage !== "undefined") {
+          const pct = data.coin_price_change_percentage;
+          const sign = pct > 0 ? "+" : "";
+          changeEl.innerText = sign + pct.toFixed(2) + "%";
+          changeEl.classList.remove("text-emerald-500", "text-red-400");
+          if (pct > 0) changeEl.classList.add("text-emerald-500");
+          if (pct < 0) changeEl.classList.add("text-red-400");
         }
       }
+
+      if (data && data.coin_image) {
+        const headerLogo = document.getElementById("coin-logo-header");
+        const cardLogo = document.getElementById("coin-logo-card");
+        if (headerLogo) headerLogo.src = data.coin_image;
+        if (cardLogo) cardLogo.src = data.coin_image;
+      }
+
+      updateFiatValue();
     } catch (e) {
-      console.warn("خطا در دریافت قیمت ONE:", e);
+      console.warn("خطا در دریافت قیمت ONE", e);
     }
   }
-
 
   async function checkDeposit() {
     try {
@@ -230,4 +262,5 @@
   App.withdraw = withdraw;
   App.copyDepositAddress = copyDepositAddress;
   App.initApp = initApp;
+  App.updateFiatValue = updateFiatValue;
 })(window);

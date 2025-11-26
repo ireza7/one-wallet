@@ -11,7 +11,9 @@
   // Explorer URL base
   const EXPLORER_URL = "https://explorer.harmony.one/tx/";
 
-  let fullHistory = [];
+  App.fullHistory = [];
+  App.historyPage = 1;
+  App.historyPerPage = 10;
 
   function formatDateTime(ts) {
     if (!ts) return "";
@@ -119,7 +121,7 @@
       '<a href="' +
       EXPLORER_URL +
       tx.tx_hash +
-      '" target="_blank" class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">' +
+      '" target="_blank" onclick="event.stopPropagation();" class="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">' +
       "مشاهده در Explorer" +
       "</a>" +
       "</div>"
@@ -133,7 +135,7 @@
     const typeFilter = filterEl ? filterEl.value : "all";
     const sortMode = sortEl ? sortEl.value : "newest";
 
-    let list = fullHistory.slice();
+    let list = App.fullHistory.slice();
 
     if (typeFilter !== "all") {
       list = list.filter(function (tx) {
@@ -197,6 +199,28 @@
     modal.classList.add("hidden");
   }
 
+  function renderPagination(totalPages) {
+    const container = document.getElementById("history-pagination");
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (totalPages <= 1) return;
+
+    for (let p = 1; p <= totalPages; p++) {
+      const btn = document.createElement("button");
+      btn.className =
+        "min-w-[2rem] px-2 py-1 rounded-full text-[11px] border " +
+        (p === App.historyPage
+          ? "bg-slate-800 text-white border-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
+          : "bg-transparent text-slate-700 border-slate-300 dark:text-slate-200 dark:border-slate-600");
+      btn.innerText = p.toString();
+      btn.addEventListener("click", function () {
+        App.gotoHistoryPage(p);
+      });
+      container.appendChild(btn);
+    }
+  }
+
   function renderHistory() {
     const listEl = document.getElementById("history-list");
     if (!listEl) return;
@@ -207,12 +231,24 @@
     if (!list.length) {
       listEl.innerHTML =
         '<div class="text-center text-[12px] text-slate-500 dark:text-slate-400 py-2">هیچ تراکنشی یافت نشد</div>';
+      renderPagination(0);
       return;
     }
 
+    const totalPages = Math.max(
+      1,
+      Math.ceil(list.length / App.historyPerPage)
+    );
+    if (App.historyPage > totalPages) App.historyPage = totalPages;
+    if (App.historyPage < 1) App.historyPage = 1;
+
+    const start = (App.historyPage - 1) * App.historyPerPage;
+    const end = start + App.historyPerPage;
+    const pageItems = list.slice(start, end);
+
     let lastDayLabel = null;
 
-    list.forEach(function (tx) {
+    pageItems.forEach(function (tx) {
       const dayLabel = getDayLabel(tx.timestamp);
 
       if (dayLabel !== lastDayLabel) {
@@ -237,9 +273,12 @@
       });
       listEl.appendChild(card);
     });
+
+    renderPagination(totalPages);
   }
 
   function updateHistoryUI() {
+    App.historyPage = 1; // reset to first page when filters change
     renderHistory();
   }
 
@@ -260,7 +299,8 @@
         return;
       }
 
-      fullHistory = Array.isArray(data.history) ? data.history : [];
+      App.fullHistory = Array.isArray(data.history) ? data.history : [];
+      App.historyPage = 1;
       renderHistory();
     } catch (e) {
       clearStatus();
@@ -268,8 +308,15 @@
     }
   }
 
+  function gotoHistoryPage(p) {
+    App.historyPage = p;
+    renderHistory();
+  }
+
   App.loadHistory = loadHistory;
   App.updateHistoryUI = updateHistoryUI;
   App.openTxModal = openTxModal;
   App.closeTxModal = closeTxModal;
+  App.renderHistory = renderHistory;
+  App.gotoHistoryPage = gotoHistoryPage;
 })(window);
