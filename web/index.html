@@ -2,22 +2,16 @@
 <html lang="fa" dir="rtl" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <title>Harmony ONE Wallet Mini App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Harmony Wallet</title>
 
-  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Fonts: Vazirmatn (FA) + Inter (EN) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <script>
     tailwind.config = {
@@ -25,257 +19,169 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Vazirmatn', 'Inter', 'system-ui'],
-            en: ['Inter', 'system-ui'],
+            sans: ['Vazirmatn', 'Inter', 'sans-serif'],
+            en: ['Inter', 'sans-serif'],
           },
+          colors: {
+            harmony: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              400: '#2dd4bf',
+              500: '#14b8a6',
+              600: '#0d9488',
+              900: '#134e4a',
+            }
+          }
         },
       },
     };
   </script>
-
   <link rel="stylesheet" href="style.css" />
 </head>
-<body
-  class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex justify-center font-sans antialiased"
->
-  <main class="w-full max-w-md px-3 py-4 space-y-4">
-    <!-- Header -->
-    <header class="flex items-center justify-between">
+<body class="bg-gray-50 text-slate-800 dark:bg-[#0f172a] dark:text-slate-200 min-h-screen font-sans transition-colors duration-300 select-none overflow-x-hidden">
+
+  <div id="toast-container" class="fixed top-4 left-0 right-0 z-50 flex flex-col items-center gap-2 pointer-events-none px-4"></div>
+
+  <main class="w-full max-w-lg mx-auto p-4 space-y-6 pb-20">
+    
+    <header class="flex items-center justify-between py-2">
       <div class="flex items-center gap-3">
-        <img
-          id="coin-logo-header"
-          class="w-10 h-10 rounded-full shadow-md object-cover"
-          src="https://via.placeholder.com/80"
-          alt="ONE Logo"
-        />
-        <div class="text-right">
-          <h1 class="text-sm font-semibold">ولت Harmony ONE</h1>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            کیف‌پول ساده و امن داخل تلگرام
-          </p>
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">Harmony ONE</h1>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">شبکه متصل</span>
+          </div>
         </div>
       </div>
-
-      <!-- Theme toggle -->
-      <button
-        id="theme-toggle"
-        type="button"
-        class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-      >
-        <span id="theme-toggle-icon" class="text-lg">🌙</span>
-        <span id="theme-toggle-label">حالت تیره</span>
+      
+      <button id="theme-toggle" class="w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center text-lg shadow-sm active:scale-95 transition">
+        <span id="theme-toggle-icon">🌙</span>
       </button>
     </header>
 
-    <!-- Status bar -->
-    <section
-      id="status-bar"
-      class="hidden items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] text-slate-600 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300"
-    >
-      <span
-        class="h-3 w-3 animate-spin rounded-full border border-slate-300 border-t-emerald-500 dark:border-slate-600 dark:border-t-emerald-400"
-      ></span>
-      <span id="status-text">در حال اتصال…</span>
-    </section>
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-2xl shadow-slate-900/20 p-6">
+      <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-cyan-500/20 blur-3xl"></div>
+      <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-blue-500/20 blur-3xl"></div>
 
-    <!-- Wallet card -->
-    <section
-      class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90 space-y-3"
-    >
-      <div class="flex items-center gap-3">
-        <img
-          id="coin-logo-card"
-          class="w-10 h-10 rounded-full shadow-md object-cover"
-          src="https://via.placeholder.com/80"
-          alt="ONE Logo"
-        />
-        <div class="flex flex-col">
-          <div id="balance-one" class="text-lg font-semibold">
-            0 ONE
-          </div>
-          <div
-            id="balance-usd"
-            class="text-[11px] text-slate-500 dark:text-slate-400 font-en"
-          >
-            $ 0.00
-          </div>
+      <div class="relative z-10 flex flex-col items-center text-center space-y-1">
+        <span class="text-[13px] text-slate-400 font-medium">موجودی کل</span>
+        <div id="balance-one" class="text-3xl font-bold tracking-tight font-en mt-1 skeleton-text min-w-[120px]">
+          -- ONE
+        </div>
+        <div id="balance-usd" class="text-sm text-cyan-400 font-medium font-en skeleton-text min-w-[80px]">
+          $ --
         </div>
       </div>
 
-      <div class="border-t border-slate-100 pt-3 dark:border-slate-800 space-y-3">
-        <div class="flex items-center justify-between text-[12px]">
-          <span class="text-slate-500 dark:text-slate-400">قیمت ONE</span>
-          <div class="flex items-center gap-2">
-            <span
-              id="one-price"
-              class="text-[13px] font-medium text-slate-800 dark:text-slate-100 font-en"
-            >
-              $0.000000
-            </span>
-            <span
-              id="one-price-change"
-              class="text-[11px] text-slate-500 dark:text-slate-400 font-en"
-            ></span>
+      <div class="relative z-10 mt-6 pt-5 border-t border-white/10 flex items-center justify-between">
+        <div class="flex flex-col gap-1 text-right">
+          <span class="text-[11px] text-slate-400">آدرس شما</span>
+          <div class="flex items-center gap-2 bg-white/5 rounded-lg pl-1 pr-3 py-1.5 border border-white/5" onclick="App.copyDepositAddress()">
+            <code id="deposit-address" class="text-[11px] font-mono text-slate-200 truncate max-w-[140px] dir-ltr">
+              one1...
+            </code>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
           </div>
         </div>
-
-        <!-- Deposit address with copy button -->
-        <div class="space-y-1">
-          <div class="text-[12px] text-slate-500 dark:text-slate-400">آدرس واریز</div>
-
-          <div
-            class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900 px-3 py-2"
-          >
-            <code
-              id="deposit-address"
-              class="text-[11px] text-slate-700 dark:text-slate-200 break-all font-en"
-            ></code>
-
-            <button
-              type="button"
-              onclick="App.copyDepositAddress && App.copyDepositAddress()"
-              class="ml-2 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] dark:border-slate-600 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              📋
-            </button>
+        
+        <div class="flex flex-col gap-1 text-left">
+          <span class="text-[11px] text-slate-400">قیمت لحظه‌ای</span>
+          <div class="flex items-center justify-end gap-1.5">
+            <span id="one-price" class="text-[13px] font-bold font-en">$0.00</span>
+            <span id="one-price-change" class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-en">+0%</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Withdraw section (moved up above history) -->
-    <section
-      class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90"
-    >
-      <div class="mb-3">
-        <h2 class="text-sm font-semibold">📤 درخواست برداشت</h2>
-        <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-          ONE را به ولت دلخواه خود منتقل کنید.
-        </p>
-      </div>
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="App.checkDeposit()" class="col-span-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-3 flex flex-col items-center gap-2 shadow-sm active:scale-95 transition group">
+        <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        </div>
+        <span class="text-[12px] font-semibold">بررسی واریز</span>
+      </button>
 
-      <div class="space-y-3">
-        <div class="space-y-1.5 text-right">
-          <label
-            for="withdrawAddress"
-            class="block text-[12px] text-slate-500 dark:text-slate-400"
-          >
-            آدرس مقصد
-          </label>
-          <input
-            id="withdrawAddress"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:placeholder:text-slate-500 font-en"
-            placeholder="مثال: one1..."
-            autocomplete="off"
-          />
+      <button onclick="document.getElementById('withdraw-section').scrollIntoView({behavior: 'smooth'})" class="col-span-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-3 flex flex-col items-center gap-2 shadow-sm active:scale-95 transition group">
+        <div class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-500/10 text-red-500 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        </div>
+        <span class="text-[12px] font-semibold">برداشت</span>
+      </button>
+    </div>
+
+    <section id="withdraw-section" class="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm">
+      <h2 class="text-sm font-bold flex items-center gap-2 mb-4">
+        <span class="w-1 h-4 bg-red-500 rounded-full"></span>
+        درخواست برداشت
+      </h2>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 pr-1">آدرس مقصد (ONE)</label>
+          <div class="relative">
+            <input id="withdrawAddress" type="text" class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl py-3 px-4 text-[13px] font-en focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition dir-ltr" placeholder="one1..." autocomplete="off">
+          </div>
         </div>
 
-        <div class="space-y-1.5 text-right">
-          <label
-            for="withdrawAmount"
-            class="block text-[12px] text-slate-500 dark:text-slate-400"
-          >
-            مبلغ (ONE)
-          </label>
-          <input
-            id="withdrawAmount"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:placeholder:text-slate-500 font-en"
-            placeholder="مثال: 12.5"
-            inputmode="decimal"
-            autocomplete="off"
-          />
+        <div>
+          <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 pr-1">مبلغ (ONE)</label>
+          <div class="relative">
+            <input id="withdrawAmount" type="number" inputmode="decimal" class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl py-3 px-4 text-[13px] font-en focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition dir-ltr" placeholder="0.0">
+            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+              <span class="text-[11px] text-slate-400 font-en">MAX</span>
+            </div>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onclick="App.withdraw && App.withdraw()"
-          class="mt-1 inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-3 py-2.5 text-[13px] font-semibold text-emerald-950 shadow-sm hover:bg-emerald-600"
-        >
+        <button onclick="App.withdraw()" class="w-full bg-red-500 hover:bg-red-600 text-white rounded-xl py-3 text-[13px] font-bold shadow-lg shadow-red-500/20 active:scale-[0.98] transition">
           ثبت درخواست برداشت
         </button>
       </div>
     </section>
 
-    <!-- Actions: check deposit -->
     <section>
-      <button
-        type="button"
-        onclick="App.checkDeposit && App.checkDeposit()"
-        class="inline-flex w-full items-center justify-center gap-1 rounded-full bg-emerald-500 px-3 py-2 text-[12px] font-medium text-emerald-950 shadow-sm hover:bg-emerald-600"
-      >
-        🔄
-        <span>بررسی واریز جدید</span>
-      </button>
-    </section>
-
-    <!-- History section under wallet & withdraw -->
-    <section class="space-y-3" id="history-section">
-      <!-- Header + filters -->
-      <div class="flex items-center justify-between gap-3">
-        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          📜 تاریخچه تراکنش‌ها
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h2 class="text-sm font-bold flex items-center gap-2">
+          <span class="w-1 h-4 bg-blue-500 rounded-full"></span>
+          تراکنش‌های اخیر
         </h2>
+        <button onclick="App.loadHistory()" class="text-[11px] text-blue-500 font-medium">بروزرسانی</button>
+      </div>
 
-        <div class="flex items-center gap-2">
-          <!-- Type filter -->
-          <select
-            id="history-filter"
-            class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] px-2 py-1"
-            onchange="App.updateHistoryUI && App.updateHistoryUI()"
-          >
-            <option value="all">همه</option>
-            <option value="DEPOSIT">واریز</option>
-            <option value="WITHDRAW">برداشت</option>
-          </select>
-
-          <!-- Sort -->
-          <select
-            id="history-sort"
-            class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] px-2 py-1"
-            onchange="App.updateHistoryUI && App.updateHistoryUI()"
-          >
-            <option value="newest">جدیدترین</option>
-            <option value="oldest">قدیمی‌ترین</option>
-          </select>
+      <div id="history-list" class="space-y-3">
+        <div class="text-center py-8">
+          <div class="inline-block w-6 h-6 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+          <p class="text-[11px] text-slate-400 mt-2">در حال دریافت لیست...</p>
         </div>
       </div>
-
-      <!-- List -->
-      <div id="history-list" class="space-y-4">
-        <!-- groups & cards rendered by JS -->
-      </div>
-
-      <!-- Pagination -->
-      <div
-        id="history-pagination"
-        class="flex items-center justify-center gap-1 pt-1"
-      >
-        <!-- page buttons rendered by JS -->
-      </div>
+      
+      <div id="history-pagination" class="flex justify-center gap-2 mt-4 dir-ltr"></div>
     </section>
+
   </main>
 
-  <!-- Transaction Details Modal -->
-  <div id="tx-modal"
-      class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
-    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-5 shadow-xl border border-slate-200 dark:border-slate-700">
-      <h2 class="text-sm font-semibold mb-3">جزئیات تراکنش</h2>
-      <div id="tx-modal-content" class="text-[13px] space-y-2">
-        <!-- محتوا با JS رندر می‌شود -->
+  <div id="tx-modal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity opacity-0" id="tx-modal-backdrop" onclick="App.closeTxModal()"></div>
+    <div class="absolute bottom-0 left-0 right-0 p-4 md:relative md:p-0 md:flex md:items-center md:justify-center md:h-full pointer-events-none">
+      <div class="bg-white dark:bg-slate-900 w-full max-w-sm mx-auto rounded-3xl p-6 shadow-2xl transform translate-y-full transition-transform duration-300 pointer-events-auto" id="tx-modal-panel">
+        <div class="w-12 h-1 bg-gray-200 dark:bg-slate-700 rounded-full mx-auto mb-4"></div>
+        <h3 class="text-center font-bold text-lg mb-6">جزئیات تراکنش</h3>
+        <div id="tx-modal-content" class="space-y-4 text-sm"></div>
+        <button onclick="App.closeTxModal()" class="w-full mt-6 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl py-3 font-bold">بستن</button>
       </div>
-      <button onclick="App.closeTxModal && App.closeTxModal()"
-              class="mt-4 w-full rounded-xl bg-slate-800 text-white py-2 text-[13px] dark:bg-slate-700">
-        بستن
-      </button>
     </div>
   </div>
 
-  <!-- JS modules -->
   <script src="js/api.js"></script>
   <script src="js/status.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/history.js"></script>
   <script src="js/wallet.js"></script>
-  <script src="js/theme.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

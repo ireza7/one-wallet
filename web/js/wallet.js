@@ -2,27 +2,39 @@
 (function (global) {
   const App = global.App || (global.App = {});
 
+  // دسترسی به متدهای سراسری
   const tg = App.tg;
   const api = App.api;
 
+  // متدهای نمایش پیام (از status.js)
   const setStatus = App.setStatus;
   const clearStatus = App.clearStatus;
   const showError = App.showError;
+  const showSuccess = App.showSuccess;
 
   App.lastBalance = 0;
   App.latestPrice = 0;
 
+  // === بروزرسانی نمایش دلاری ===
   function updateFiatValue() {
     const usdEl = document.getElementById("balance-usd");
     if (!usdEl) return;
+    
+    // برداشتن انیمیشن اسکلتی اگر دیتا رسید
+    if (App.lastBalance !== undefined && App.latestPrice) {
+        usdEl.classList.remove("skeleton-text", "text-transparent");
+        document.getElementById("balance-one").classList.remove("skeleton-text", "text-transparent");
+    }
+
     if (!App.lastBalance || !App.latestPrice) {
-      usdEl.innerText = "$ 0.00";
+      if(!App.lastBalance) usdEl.innerText = "$ 0.00";
       return;
     }
     const usd = (Number(App.lastBalance) * Number(App.latestPrice)).toFixed(2);
     usdEl.innerText = "$ " + usd;
   }
 
+  // === دریافت موجودی ===
   async function refreshBalance() {
     try {
       const initData = tg && tg.initData;
@@ -32,10 +44,11 @@
       if (!res.ok) return;
 
       const balanceEl = document.getElementById("balance-one");
-
       App.lastBalance = res.balance || 0;
 
-      if (balanceEl) balanceEl.innerText = res.balance + " ONE";
+      if (balanceEl) {
+        balanceEl.innerText = Number(res.balance).toLocaleString("en-US") + " ONE";
+      }
 
       updateFiatValue();
     } catch (e) {
@@ -43,7 +56,7 @@
     }
   }
 
-  // Fetch ONE price & logo from Harmony explorer official API
+  // === دریافت قیمت لحظه‌ای ===
   async function fetchOnePrice() {
     try {
       const res = await fetch("https://explorer.harmony.one/api/v2/stats");
@@ -53,71 +66,71 @@
         App.latestPrice = Number(data.coin_price);
         const priceEl = document.getElementById("one-price");
         if (priceEl) {
-          priceEl.innerText = "$" + App.latestPrice.toFixed(6);
+          priceEl.innerText = "$" + App.latestPrice.toFixed(4);
         }
 
         const changeEl = document.getElementById("one-price-change");
         if (changeEl && typeof data.coin_price_change_percentage !== "undefined") {
-          const pct = data.coin_price_change_percentage;
+          const pct = Number(data.coin_price_change_percentage);
           const sign = pct > 0 ? "+" : "";
           changeEl.innerText = sign + pct.toFixed(2) + "%";
-          changeEl.classList.remove("text-emerald-500", "text-red-400");
-          if (pct > 0) changeEl.classList.add("text-emerald-500");
-          if (pct < 0) changeEl.classList.add("text-red-400");
+          
+          changeEl.className = "text-[10px] px-1.5 py-0.5 rounded font-en " + 
+            (pct >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500");
         }
       }
-
-      if (data && data.coin_image) {
-        const headerLogo = document.getElementById("coin-logo-header");
-        const cardLogo = document.getElementById("coin-logo-card");
-        if (headerLogo) headerLogo.src = data.coin_image;
-        if (cardLogo) cardLogo.src = data.coin_image;
-      }
-
       updateFiatValue();
     } catch (e) {
       console.warn("خطا در دریافت قیمت ONE", e);
     }
   }
 
+  // === بررسی واریز (دکمه) ===
   async function checkDeposit() {
     try {
       const initData = tg && tg.initData;
       if (!initData) {
-        alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        showError("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
         return;
       }
 
-      setStatus("در حال بررسی واریز...");
-      const d = await api("/check-deposit", { initData });
-      clearStatus();
+      // نمایش لودینگ کوچک (اختیاری)
+      // setStatus("در حال بررسی...");
 
+      const d = await api("/check-deposit", { initData });
+      
       if (d.rate_limited) {
-        alert(d.error);
+        showError(d.error);
         return;
       }
 
       if (!d.ok) {
-        alert(d.error || "خطا در بررسی واریز");
+        showError(d.error || "خطا در بررسی واریز");
         return;
       }
 
-      alert(d.message || "واریز با موفقیت ثبت شد.");
+      // موفقیت
+      if (d.count > 0) {
+          showSuccess(`${d.count} تراکنش جدید یافت شد.`);
+      } else {
+          showSuccess("واریز جدیدی یافت نشد.");
+      }
+
       await refreshBalance();
       if (App.loadHistory) {
         await App.loadHistory();
       }
     } catch (e) {
-      clearStatus();
-      alert("خطا در بررسی واریز");
+      showError("خطا در ارتباط با سرور");
     }
   }
 
+  // === درخواست برداشت ===
   async function withdraw() {
     try {
       const initData = tg && tg.initData;
       if (!initData) {
-        alert("initData در دسترس نیست. از داخل تلگرام وارد شوید.");
+        showError("initData در دسترس نیست.");
         return;
       }
 
@@ -127,116 +140,109 @@
       const amt = amtEl ? Number(amtEl.value) : 0;
 
       if (!addr || !amt) {
-        alert("لطفاً آدرس و مبلغ برداشت را کامل وارد کنید.");
+        showError("لطفاً آدرس و مبلغ را وارد کنید.");
         return;
       }
 
-      setStatus("در حال ثبت درخواست برداشت...");
+      if (!addr.startsWith("one1")) {
+        showError("آدرس نامعتبر است (باید با one1 شروع شود).");
+        return;
+      }
+
+      // setStatus("در حال ارسال...");
       const d = await api("/withdraw", {
         initData,
         address: addr,
         amount: amt,
       });
-      clearStatus();
 
       if (!d.ok) {
-        alert(d.error || "خطای برداشت");
+        showError(d.error || "خطای برداشت");
         return;
       }
 
-      alert("درخواست برداشت ثبت شد.\nTransaction: " + (d.txHash || ""));
+      showSuccess("درخواست برداشت ثبت شد.");
+      
+      // پاک کردن فرم
+      if(addrEl) addrEl.value = "";
+      if(amtEl) amtEl.value = "";
+
       await refreshBalance();
       if (App.loadHistory) {
         await App.loadHistory();
       }
     } catch (e) {
-      clearStatus();
-      alert("خطا در برداشت");
+      showError("خطا در انجام عملیات");
     }
   }
 
+  // === کپی آدرس ===
   function copyDepositAddress() {
     const el = document.getElementById("deposit-address");
     if (!el) return;
     const text = el.innerText.trim();
-    if (!text) return;
+    if (!text || text === "one1...") return;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(
         () => {
-          if (tg && tg.showPopup) {
-            tg.showPopup({ message: "آدرس کپی شد" });
-          } else {
-            alert("آدرس کپی شد");
-          }
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            showSuccess("آدرس کپی شد");
         },
-        () => {
-          alert("خطا در کپی آدرس");
-        }
+        () => showError("خطا در کپی آدرس")
       );
     } else {
-      const tmp = document.createElement("textarea");
-      tmp.value = text;
-      document.body.appendChild(tmp);
-      tmp.select();
+      // Fallback برای مرورگرهای قدیمی
       try {
+        const tmp = document.createElement("textarea");
+        tmp.value = text;
+        document.body.appendChild(tmp);
+        tmp.select();
         document.execCommand("copy");
-        alert("آدرس کپی شد");
+        document.body.removeChild(tmp);
+        showSuccess("آدرس کپی شد");
       } catch (e) {
-        alert("خطا در کپی آدرس");
+        showError("خطا در کپی آدرس");
       }
-      document.body.removeChild(tmp);
     }
   }
 
+  // === شروع برنامه ===
   async function initApp() {
     try {
-      setStatus("در حال آماده‌سازی اپلیکیشن...");
+      // setStatus("در حال اتصال...");
 
       if (!tg) {
-        clearStatus();
-        showError("لطفاً این Mini App را از داخل تلگرام باز کنید.");
+        showError("لطفاً از داخل تلگرام باز کنید.");
         return;
       }
 
       if (tg.ready) tg.ready();
-
-      setStatus("در حال شناسایی کاربر...");
+      if (tg.expand) tg.expand(); // تمام صفحه کردن در تلگرام
 
       const initData = tg.initData;
-      const unsafe = tg.initDataUnsafe;
-
-      if (!unsafe || !unsafe.user || !unsafe.user.id) {
-        clearStatus();
-        showError("کاربر تلگرام شناسایی نشد. Mini App را از داخل ربات باز کنید.");
-        return;
-      }
-
-      setStatus("در حال ورود به والت...");
-
+      
+      // احراز هویت اولیه
       const resp = await api("/init", { initData });
 
       if (!resp.ok) {
         if (resp.error === "invalid telegram auth") {
-          showError(
-            "احراز هویت تلگرام نامعتبر است. Mini App را ببندید و دوباره از ربات باز کنید."
-          );
-        } else if (resp.error === "network_error") {
-          showError("خطای شبکه. اتصال اینترنت یا سرور را بررسی کنید.");
+          showError("احراز هویت نامعتبر است. مجدد تلاش کنید.");
         } else {
           showError(resp.error || "خطا در ورود");
         }
-        clearStatus();
         return;
       }
 
-      // deposit address
+      // نمایش آدرس کاربر
       const depositAddressEl = document.getElementById("deposit-address");
       if (depositAddressEl && resp.user && resp.user.deposit_address) {
         depositAddressEl.innerText = resp.user.deposit_address;
       }
 
-      setStatus("در حال دریافت موجودی و قیمت...");
+      // دریافت اطلاعات مالی
       await refreshBalance();
       await fetchOnePrice();
 
@@ -244,14 +250,12 @@
         await App.loadHistory();
       }
 
-      clearStatus();
-
-      // auto refresh every 15s
+      // آپدیت خودکار هر 15 ثانیه
       setInterval(refreshBalance, 15000);
       setInterval(fetchOnePrice, 15000);
+
     } catch (err) {
       console.error(err);
-      clearStatus();
       showError("خطا در اجرای برنامه");
     }
   }
