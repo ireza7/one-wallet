@@ -11,13 +11,13 @@ CREATE TABLE IF NOT EXISTS users (
     deposit_address VARCHAR(128),
     balance DECIMAL(36, 18) NOT NULL DEFAULT 0,
 
-    sweep_lock TINYINT(1) NOT NULL DEFAULT 0,     -- ضد double-sweep
-    last_check_deposit BIGINT DEFAULT 0,          -- rate limit برای check-deposit
+    sweep_lock TINYINT(1) NOT NULL DEFAULT 0,     -- مکانیزم قفل برای جلوگیری از Double-Sweep
+    sweep_lock_ts BIGINT DEFAULT 0,               -- زمان شروع قفل (برای باز کردن خودکار قفل‌های گیرکرده)
+    last_check_deposit BIGINT DEFAULT 0,          -- محدودیت زمانی (Rate limit) برای بررسی واریز
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 
 
 -- ===========================================
@@ -45,7 +45,6 @@ CREATE TABLE IF NOT EXISTS deposit_txs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
-
 -- ===========================================
 -- WITHDRAW REQUESTS (user → withdraw)
 -- ===========================================
@@ -66,7 +65,6 @@ CREATE TABLE IF NOT EXISTS withdraw_requests (
     CONSTRAINT fk_withdraw_users FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 
 
 -- ===========================================
@@ -93,7 +91,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     CONSTRAINT fk_tx_users FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 
 
 -- ===========================================
