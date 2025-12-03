@@ -5,7 +5,6 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "worker": "node src/worker.js",
     "dev": "nodemon src/server.js"
   },
   "dependencies": {
