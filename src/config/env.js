@@ -12,7 +12,6 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: process.env.PORT || 3000,
 
-  // اضافه کردن این خط ضروری است 👇
   BOT_TOKEN: requireEnv('TG_BOT_TOKEN'), 
 
   DB_HOST: requireEnv('DB_HOST'),
@@ -26,7 +25,4 @@ module.exports = {
   HOT_WALLET_PRIVATE_KEY: requireEnv('HOT_WALLET_PRIVATE_KEY'),
   HOT_WALLET_ADDRESS: requireEnv('HOT_WALLET_ADDRESS'),
 
-  TATUM_API_KEY: requireEnv('TATUM_API_KEY'),
-  WEBHOOK_URL: requireEnv('WEBHOOK_URL'),
-  WEBHOOK_SECRET: requireEnv('WEBHOOK_SECRET')
 };

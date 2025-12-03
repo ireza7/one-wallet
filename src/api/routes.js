@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const db = require("../db/index");
 
+// سرویس‌ها
 const { 
   findOrCreateUserByTelegram, 
   getUserByTelegramId, 
@@ -11,12 +12,13 @@ const {
 
 const { sweepUserDeposits } = require('../services/sweepService');
 const { requestWithdraw } = require('../services/withdrawService');
-const { WEBHOOK_SECRET, BOT_TOKEN } = require('../config/env');
+const { provider } = require('../services/harmonyService'); // <--- اضافه شده برای چک کردن تراکنش
+const { BOT_TOKEN } = require('../config/env');
 
 const MAX_INITDATA_AGE = 24 * 60 * 60; // 24 ساعت
 
 // ==========================================
-//  HELPER FUNCTIONS (VALIDATION)
+//  HELPER FUNCTIONS
 // ==========================================
 
 function isHex64(str) {
@@ -33,7 +35,6 @@ function safeEqualHex(aHex, bHex) {
 
 function isValidOneAddress(addr) {
   if (!addr || typeof addr !== 'string') return false;
-  // فرمت ساده آدرس Harmony (شروع با one1 و طول 42 کاراکتر)
   return /^one1[a-z0-9]{38}$/i.test(addr);
 }
 
@@ -90,7 +91,6 @@ function validateTelegramInitData(initData) {
   return user;
 }
 
-// میدلور احراز هویت تلگرام
 function telegramAuth(req, res, next) {
   try {
     let initData = (req.body && (req.body.initData || req.body.init_data || req.body.init)) ||
@@ -110,54 +110,7 @@ function telegramAuth(req, res, next) {
 }
 
 // ==========================================
-//  WEBHOOK HANDLER (TATUM)
-// ==========================================
-
-router.post('/webhook', async (req, res) => {
-  try {
-    // بررسی امنیت (Secret)
-    const querySecret = req.query.secret;
-    if (WEBHOOK_SECRET && querySecret !== WEBHOOK_SECRET) {
-      return res.status(403).json({ message: 'Forbidden' });
-    }
-
-    const { address, txId } = req.body;
-
-    if (!address) {
-      return res.status(400).json({ message: 'No address provided' });
-    }
-
-    // پیدا کردن کاربر صاحب این آدرس
-    const user = await getUserByDepositAddress(address);
-    if (!user) {
-      // آدرس ناشناس (شاید مربوط به سیستم ما نیست)
-      return res.status(200).json({ message: 'User not found, ignored' });
-    }
-
-    console.log(`[Webhook] Incoming Deposit for User ${user.id}. TX: ${txId}`);
-
-    // اجرای Sweep به صورت Fire & Forget (بدون منتظر ماندن برای نتیجه)
-    sweepUserDeposits(user)
-      .then(txs => {
-        if (txs && txs.length > 0) {
-            console.log(`[Webhook] Sweep successful for user ${user.id}: ${txs.length} txs`);
-        }
-      })
-      .catch(err => {
-        console.error(`[Webhook] Sweep failed for user ${user.id}:`, err);
-      });
-
-    return res.status(200).json({ result: true });
-
-  } catch (err) {
-    console.error('[Webhook] Internal Error:', err);
-    return res.status(500).json({ error: 'Internal Error' });
-  }
-});
-
-
-// ==========================================
-//  CLIENT API ROUTES
+//  ROUTES
 // ==========================================
 
 router.post('/init', telegramAuth, async (req, res) => {
@@ -165,19 +118,20 @@ router.post('/init', telegramAuth, async (req, res) => {
     const user = await findOrCreateUserByTelegram(req.telegramUser);
     return res.json({ ok: true, user });
   } catch (err) {
+    console.error('init error:', err);
     return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
 
-// این روت هنوز می‌تواند به عنوان روش دستی (Manual Check) باقی بماند
 router.post('/check-deposit', telegramAuth, async (req, res) => {
   try {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
+    // Rate Limit (جلوگیری از اسپم دکمه توسط کاربر)
     const now = Date.now();
     const last = Number(user.last_check_deposit || 0);
-    const RATE_LIMIT_MS = 15000;
+    const RATE_LIMIT_MS = 15000; // 15 ثانیه صبر بین هر چک
 
     if (now - last < RATE_LIMIT_MS) {
       const wait = Math.ceil((RATE_LIMIT_MS - (now - last)) / 1000);
@@ -191,7 +145,9 @@ router.post('/check-deposit', telegramAuth, async (req, res) => {
 
     await db.query("UPDATE users SET last_check_deposit = ? WHERE id = ?", [now, user.id]);
 
+    // فراخوانی سرویس Sweep (بررسی واریز + انتقال به هات‌ولت)
     const newTxs = await sweepUserDeposits(user);
+    
     return res.json({
       ok: true,
       count: newTxs.length,
@@ -201,6 +157,7 @@ router.post('/check-deposit', telegramAuth, async (req, res) => {
         : `${newTxs.length} واریز جدید شناسایی شد`
     });
   } catch (err) {
+    console.error('Check-Deposit Error:', err);
     return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
@@ -220,7 +177,6 @@ router.post('/withdraw', telegramAuth, async (req, res) => {
     let { address, amount } = req.body;
     amount = Number(amount);
 
-    // اعتبارسنجی ورودی‌ها
     if (!isValidAmount(amount)) {
       return res.status(400).json({ ok: false, error: 'مبلغ وارد شده معتبر نیست' });
     }
@@ -232,7 +188,6 @@ router.post('/withdraw', telegramAuth, async (req, res) => {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
-    // جلوگیری از واریز به خود (اختیاری)
     if (address.toLowerCase() === user.deposit_address.toLowerCase()) {
       return res.status(400).json({ ok: false, error: 'نمی‌توانید به آدرس واریز خودتان برداشت کنید' });
     }
@@ -240,6 +195,7 @@ router.post('/withdraw', telegramAuth, async (req, res) => {
     const result = await requestWithdraw(user, address, amount);
     return res.json({ ok: true, requestId: result.requestId, txHash: result.txHash });
   } catch (err) {
+    console.error('Withdraw Error:', err);
     return res.status(400).json({ ok: false, error: err.message || 'خطا در انجام عملیات' });
   }
 });
@@ -249,45 +205,56 @@ router.post('/history', telegramAuth, async (req, res) => {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
-    // 1. دریافت تراکنش‌های در انتظار برداشت (فقط برای همین کاربر)
+    // === بخش جدید: بررسی خودکار برداشت‌های معلق ===
+    // چون Worker نداریم، اینجا چک می‌کنیم تا وضعیت تراکنش‌های گیر کرده مشخص شود
     const [pendingWithdrawals] = await db.query(
       "SELECT * FROM transactions WHERE user_id = ? AND tx_type = 'WITHDRAW' AND status = 'PENDING' LIMIT 5",
       [user.id]
     );
 
-    // 2. بررسی وضعیت آنها در بلاکچین (On-Demand Check)
-    for (const tx of pendingWithdrawals) {
-      try {
-        const receipt = await provider.getTransactionReceipt(tx.tx_hash);
-        if (receipt) {
-            const newStatus = receipt.status === 1 ? 'CONFIRMED' : 'FAILED';
+    if (pendingWithdrawals.length > 0) {
+      console.log(`Checking ${pendingWithdrawals.length} pending withdrawals for user ${user.id}...`);
+      for (const tx of pendingWithdrawals) {
+        if (!tx.tx_hash) continue;
+        try {
+          // استعلام وضعیت از بلاکچین
+          const receipt = await provider.getTransactionReceipt(tx.tx_hash);
+          
+          if (receipt) {
+            const isSuccess = receipt.status === 1;
+            const newStatus = isSuccess ? 'CONFIRMED' : 'FAILED';
             
-            // آپدیت وضعیت تراکنش
+            console.log(`TX ${tx.tx_hash} status updated to: ${newStatus}`);
+
+            // آپدیت جدول تراکنش‌ها
             await db.query(
-                "UPDATE transactions SET status = ?, confirmed_at = NOW() WHERE id = ?",
-                [newStatus, tx.id]
+              "UPDATE transactions SET status = ?, confirmed_at = NOW() WHERE id = ?",
+              [newStatus, tx.id]
             );
 
-            // آپدیت جدول withdraw_requests
+            // آپدیت جدول درخواست‌های برداشت
             await db.query(
-                "UPDATE withdraw_requests SET status = ? WHERE tx_hash = ?",
-                [newStatus === 'CONFIRMED' ? 'APPROVED' : 'FAILED', tx.tx_hash]
+              "UPDATE withdraw_requests SET status = ? WHERE tx_hash = ?",
+              [isSuccess ? 'APPROVED' : 'FAILED', tx.tx_hash]
             );
 
-            // اگر فیل شده بود، پول را برگردان
-            if (newStatus === 'FAILED') {
-                 await db.query(
-                    "UPDATE users SET balance = balance + ? WHERE id = ?",
-                    [tx.amount, user.id]
-                );
+            // اگر تراکنش فیل شده بود، پول کاربر را برگردان
+            if (!isSuccess) {
+               console.log(`Refunding ${tx.amount} ONE to user ${user.id}`);
+               await db.query(
+                  "UPDATE users SET balance = balance + ? WHERE id = ?",
+                  [tx.amount, user.id]
+              );
             }
+          }
+        } catch (e) {
+          console.error(`Error checking tx ${tx.tx_hash}:`, e.message);
         }
-      } catch (e) {
-        console.error("Error checking tx:", tx.tx_hash);
       }
     }
+    // ==============================================
 
-    // 3. حالا تاریخچه آپدیت شده را می‌گیریم
+    // دریافت تاریخچه نهایی
     const rows = await db.query(
       "SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 50",
       [user.id]
@@ -295,6 +262,7 @@ router.post('/history', telegramAuth, async (req, res) => {
 
     return res.json({ ok: true, history: rows });
   } catch (err) {
+    console.error('History Error:', err);
     return res.status(500).json({ ok: false, error: 'internal_error' });
   }
 });
