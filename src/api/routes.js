@@ -249,6 +249,45 @@ router.post('/history', telegramAuth, async (req, res) => {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
+    // 1. دریافت تراکنش‌های در انتظار برداشت (فقط برای همین کاربر)
+    const [pendingWithdrawals] = await db.query(
+      "SELECT * FROM transactions WHERE user_id = ? AND tx_type = 'WITHDRAW' AND status = 'PENDING' LIMIT 5",
+      [user.id]
+    );
+
+    // 2. بررسی وضعیت آنها در بلاکچین (On-Demand Check)
+    for (const tx of pendingWithdrawals) {
+      try {
+        const receipt = await provider.getTransactionReceipt(tx.tx_hash);
+        if (receipt) {
+            const newStatus = receipt.status === 1 ? 'CONFIRMED' : 'FAILED';
+            
+            // آپدیت وضعیت تراکنش
+            await db.query(
+                "UPDATE transactions SET status = ?, confirmed_at = NOW() WHERE id = ?",
+                [newStatus, tx.id]
+            );
+
+            // آپدیت جدول withdraw_requests
+            await db.query(
+                "UPDATE withdraw_requests SET status = ? WHERE tx_hash = ?",
+                [newStatus === 'CONFIRMED' ? 'APPROVED' : 'FAILED', tx.tx_hash]
+            );
+
+            // اگر فیل شده بود، پول را برگردان
+            if (newStatus === 'FAILED') {
+                 await db.query(
+                    "UPDATE users SET balance = balance + ? WHERE id = ?",
+                    [tx.amount, user.id]
+                );
+            }
+        }
+      } catch (e) {
+        console.error("Error checking tx:", tx.tx_hash);
+      }
+    }
+
+    // 3. حالا تاریخچه آپدیت شده را می‌گیریم
     const rows = await db.query(
       "SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 50",
       [user.id]
