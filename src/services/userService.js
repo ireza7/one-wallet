@@ -11,7 +11,7 @@ async function findOrCreateUserByTelegram(telegramUser) {
   
   if (rows.length > 0) {
     // کاربر قبلا بوده، محض اطمینان چکش می‌کنیم که سابسکرایب شده باشه (اختیاری ولی خوبه)
-    // subscribeToAddress(rows[0].deposit_address); 
+    subscribeToAddress(rows[0].deposit_address); 
     return rows[0];
   }
 
