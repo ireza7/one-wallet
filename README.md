@@ -1,3 +1,4 @@
+# اشغاله استفاده نکنین
 # Harmony ONE Telegram Mini App Wallet (ethers.js version)
 
 این پروژه یک بک‌اند + وب‌اپ (Telegram Mini App) برای ولت هارمونی ONE است:
