@@ -21,5 +21,10 @@ module.exports = {
   HARMONY_RPC_URL: requireEnv('HARMONY_RPC_URL'),
 
   HOT_WALLET_PRIVATE_KEY: requireEnv('HOT_WALLET_PRIVATE_KEY'),
-  HOT_WALLET_ADDRESS: requireEnv('HOT_WALLET_ADDRESS')
+  HOT_WALLET_ADDRESS: requireEnv('HOT_WALLET_ADDRESS'),
+
+  // === موارد جدید برای Tatum ===
+  TATUM_API_KEY: requireEnv('TATUM_API_KEY'),
+  WEBHOOK_URL: requireEnv('WEBHOOK_URL'),       // آدرس سرور شما
+  WEBHOOK_SECRET: requireEnv('WEBHOOK_SECRET')  // رمز امنیتی دلخواه
 };

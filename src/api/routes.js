@@ -2,12 +2,22 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const db = require("../db/index");
-const { findOrCreateUserByTelegram, getUserByTelegramId } = require('../services/userService');
+
+const { 
+  findOrCreateUserByTelegram, 
+  getUserByTelegramId, 
+  getUserByDepositAddress 
+} = require('../services/userService');
+
 const { sweepUserDeposits } = require('../services/sweepService');
 const { requestWithdraw } = require('../services/withdrawService');
+const { WEBHOOK_SECRET, BOT_TOKEN } = require('../config/env');
 
-const BOT_TOKEN = process.env.TG_BOT_TOKEN;
-const MAX_INITDATA_AGE = 24 * 60 * 60;
+const MAX_INITDATA_AGE = 24 * 60 * 60; // 24 ساعت
+
+// ==========================================
+//  HELPER FUNCTIONS (VALIDATION)
+// ==========================================
 
 function isHex64(str) {
   return typeof str === 'string' && /^[0-9a-f]{64}$/i.test(str);
@@ -23,6 +33,7 @@ function safeEqualHex(aHex, bHex) {
 
 function isValidOneAddress(addr) {
   if (!addr || typeof addr !== 'string') return false;
+  // فرمت ساده آدرس Harmony (شروع با one1 و طول 42 کاراکتر)
   return /^one1[a-z0-9]{38}$/i.test(addr);
 }
 
@@ -79,6 +90,7 @@ function validateTelegramInitData(initData) {
   return user;
 }
 
+// میدلور احراز هویت تلگرام
 function telegramAuth(req, res, next) {
   try {
     let initData = (req.body && (req.body.initData || req.body.init_data || req.body.init)) ||
@@ -97,6 +109,57 @@ function telegramAuth(req, res, next) {
   }
 }
 
+// ==========================================
+//  WEBHOOK HANDLER (TATUM)
+// ==========================================
+
+router.post('/webhook', async (req, res) => {
+  try {
+    // بررسی امنیت (Secret)
+    const querySecret = req.query.secret;
+    if (WEBHOOK_SECRET && querySecret !== WEBHOOK_SECRET) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const { address, txId } = req.body;
+
+    if (!address) {
+      return res.status(400).json({ message: 'No address provided' });
+    }
+
+    // پیدا کردن کاربر صاحب این آدرس
+    const user = await getUserByDepositAddress(address);
+    if (!user) {
+      // آدرس ناشناس (شاید مربوط به سیستم ما نیست)
+      return res.status(200).json({ message: 'User not found, ignored' });
+    }
+
+    console.log(`[Webhook] Incoming Deposit for User ${user.id}. TX: ${txId}`);
+
+    // اجرای Sweep به صورت Fire & Forget (بدون منتظر ماندن برای نتیجه)
+    sweepUserDeposits(user)
+      .then(txs => {
+        if (txs && txs.length > 0) {
+            console.log(`[Webhook] Sweep successful for user ${user.id}: ${txs.length} txs`);
+        }
+      })
+      .catch(err => {
+        console.error(`[Webhook] Sweep failed for user ${user.id}:`, err);
+      });
+
+    return res.status(200).json({ result: true });
+
+  } catch (err) {
+    console.error('[Webhook] Internal Error:', err);
+    return res.status(500).json({ error: 'Internal Error' });
+  }
+});
+
+
+// ==========================================
+//  CLIENT API ROUTES
+// ==========================================
+
 router.post('/init', telegramAuth, async (req, res) => {
   try {
     const user = await findOrCreateUserByTelegram(req.telegramUser);
@@ -106,6 +169,7 @@ router.post('/init', telegramAuth, async (req, res) => {
   }
 });
 
+// این روت هنوز می‌تواند به عنوان روش دستی (Manual Check) باقی بماند
 router.post('/check-deposit', telegramAuth, async (req, res) => {
   try {
     const user = await getUserByTelegramId(req.telegramUser.id);
@@ -156,6 +220,7 @@ router.post('/withdraw', telegramAuth, async (req, res) => {
     let { address, amount } = req.body;
     amount = Number(amount);
 
+    // اعتبارسنجی ورودی‌ها
     if (!isValidAmount(amount)) {
       return res.status(400).json({ ok: false, error: 'مبلغ وارد شده معتبر نیست' });
     }
@@ -167,6 +232,7 @@ router.post('/withdraw', telegramAuth, async (req, res) => {
     const user = await getUserByTelegramId(req.telegramUser.id);
     if (!user) return res.status(404).json({ ok: false, error: 'user not found' });
 
+    // جلوگیری از واریز به خود (اختیاری)
     if (address.toLowerCase() === user.deposit_address.toLowerCase()) {
       return res.status(400).json({ ok: false, error: 'نمی‌توانید به آدرس واریز خودتان برداشت کنید' });
     }
