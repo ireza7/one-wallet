@@ -18,18 +18,32 @@
   // === بروزرسانی نمایش دلاری ===
   function updateFiatValue() {
     const usdEl = document.getElementById("balance-usd");
-    if (!usdEl) return;
+    const balanceOneEl = document.getElementById("balance-one");
+    
+    if (!usdEl || !balanceOneEl) return;
     
     // برداشتن انیمیشن اسکلتی اگر دیتا رسید
-    if (App.lastBalance !== undefined && App.latestPrice) {
-        usdEl.classList.remove("skeleton-text", "text-transparent");
-        document.getElementById("balance-one").classList.remove("skeleton-text", "text-transparent");
+    if (App.lastBalance !== undefined) {
+        balanceOneEl.classList.remove("skeleton-text", "text-transparent");
+        if (App.latestPrice) {
+            usdEl.classList.remove("skeleton-text", "text-transparent");
+        }
     }
 
-    if (!App.lastBalance || !App.latestPrice) {
-      if(!App.lastBalance) usdEl.innerText = "$ 0.00";
+    if (!App.lastBalance) {
+      // اگر موجودی صفر است یا هنوز لود نشده
+      if (App.lastBalance === 0) {
+          balanceOneEl.innerText = "0 ONE";
+          usdEl.innerText = "$ 0.00";
+      }
       return;
     }
+
+    if (!App.latestPrice) {
+      usdEl.innerText = "$ --";
+      return;
+    }
+
     const usd = (Number(App.lastBalance) * Number(App.latestPrice)).toFixed(2);
     usdEl.innerText = "$ " + usd;
   }
@@ -47,7 +61,8 @@
       App.lastBalance = res.balance || 0;
 
       if (balanceEl) {
-        balanceEl.innerText = Number(res.balance).toLocaleString("en-US") + " ONE";
+        // فرمت کردن عدد با جداکننده هزارگان
+        balanceEl.innerText = Number(res.balance).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " ONE";
       }
 
       updateFiatValue();
@@ -59,6 +74,8 @@
   // === دریافت قیمت لحظه‌ای ===
   async function fetchOnePrice() {
     try {
+      // استفاده از API کوین‌گکو یا هارمونی اکسپلورر
+      // نکته: اکسپلورر هارمونی گاهی کند است، این اندپوینت مثال است
       const res = await fetch("https://explorer.harmony.one/api/v2/stats");
       const data = await res.json();
 
@@ -75,6 +92,7 @@
           const sign = pct > 0 ? "+" : "";
           changeEl.innerText = sign + pct.toFixed(2) + "%";
           
+          // تغییر رنگ بر اساس مثبت/منفی
           changeEl.className = "text-[10px] px-1.5 py-0.5 rounded font-en " + 
             (pct >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500");
         }
@@ -94,13 +112,11 @@
         return;
       }
 
-      // نمایش لودینگ کوچک (اختیاری)
-      // setStatus("در حال بررسی...");
-
       const d = await api("/check-deposit", { initData });
       
       if (d.rate_limited) {
-        showError(d.error);
+        // اگر کاربر تند تند کلیک کرد
+        showError(d.error || "لطفاً کمی صبر کنید...");
         return;
       }
 
@@ -109,9 +125,11 @@
         return;
       }
 
-      // موفقیت
+      // نمایش پیام موفقیت
       if (d.count > 0) {
-          showSuccess(`${d.count} تراکنش جدید یافت شد.`);
+          showSuccess(`${d.count} واریز جدید دریافت شد! 🎉`);
+          // پخش ویبره موفقیت (Haptic Feedback)
+          if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
       } else {
           showSuccess("واریز جدیدی یافت نشد.");
       }
@@ -140,16 +158,18 @@
       const amt = amtEl ? Number(amtEl.value) : 0;
 
       if (!addr || !amt) {
-        showError("لطفاً آدرس و مبلغ را وارد کنید.");
+        showError("لطفاً آدرس و مبلغ را کامل وارد کنید.");
         return;
       }
 
       if (!addr.startsWith("one1")) {
-        showError("آدرس نامعتبر است (باید با one1 شروع شود).");
+        showError("آدرس مقصد معتبر نیست (باید با one1 شروع شود).");
         return;
       }
 
-      // setStatus("در حال ارسال...");
+      // دکمه را غیرفعال کنیم تا دوباره نزند (اختیاری)
+      // ...
+
       const d = await api("/withdraw", {
         initData,
         address: addr,
@@ -158,10 +178,12 @@
 
       if (!d.ok) {
         showError(d.error || "خطای برداشت");
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         return;
       }
 
-      showSuccess("درخواست برداشت ثبت شد.");
+      showSuccess("درخواست برداشت با موفقیت ثبت شد.");
+      if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
       
       // پاک کردن فرم
       if(addrEl) addrEl.value = "";
@@ -181,20 +203,23 @@
     const el = document.getElementById("deposit-address");
     if (!el) return;
     const text = el.innerText.trim();
-    if (!text || text === "one1...") return;
+    if (!text || text === "one1...") return; // اگر هنوز لود نشده کپی نکن
+
+    // تابع کپی
+    const doCopy = () => {
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.selectionChanged();
+        }
+        showSuccess("آدرس کپی شد");
+    };
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(
-        () => {
-            if (tg && tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
-            }
-            showSuccess("آدرس کپی شد");
-        },
+        doCopy,
         () => showError("خطا در کپی آدرس")
       );
     } else {
-      // Fallback برای مرورگرهای قدیمی
+      // روش قدیمی برای مرورگرهای خاص
       try {
         const tmp = document.createElement("textarea");
         tmp.value = text;
@@ -202,7 +227,7 @@
         tmp.select();
         document.execCommand("copy");
         document.body.removeChild(tmp);
-        showSuccess("آدرس کپی شد");
+        doCopy();
       } catch (e) {
         showError("خطا در کپی آدرس");
       }
@@ -212,34 +237,44 @@
   // === شروع برنامه ===
   async function initApp() {
     try {
-      // setStatus("در حال اتصال...");
-
       if (!tg) {
-        showError("لطفاً از داخل تلگرام باز کنید.");
-        return;
+        // اگر بیرون از تلگرام باز شده
+        // showError("لطفاً از داخل تلگرام باز کنید.");
+        // برای تست روی مرورگر ارور ندهیم بهتر است، فقط لاگ کنیم
+        console.warn("Telegram WebApp not detected");
+      } else {
+        if (tg.ready) tg.ready();
+        if (tg.expand) tg.expand(); 
+        // تنظیم رنگ هدر با تم
+        if (tg.setHeaderColor) {
+            // تشخیص تم تاریک/روشن برای هدر
+            const isDark = document.documentElement.classList.contains('dark');
+            tg.setHeaderColor(isDark ? '#0f172a' : '#f9fafb'); 
+        }
       }
 
-      if (tg.ready) tg.ready();
-      if (tg.expand) tg.expand(); // تمام صفحه کردن در تلگرام
-
-      const initData = tg.initData;
+      const initData = tg ? tg.initData : "";
       
       // احراز هویت اولیه
       const resp = await api("/init", { initData });
 
       if (!resp.ok) {
         if (resp.error === "invalid telegram auth") {
-          showError("احراز هویت نامعتبر است. مجدد تلاش کنید.");
+          showError("نشست نامعتبر است. لطفاً ربات را دوباره باز کنید.");
         } else {
-          showError(resp.error || "خطا در ورود");
+          // خطای شبکه یا سرور
+          // showError("خطا در اتصال به سرور");
+          console.error("Init failed:", resp.error);
         }
-        return;
+        // حتی اگر خطا داد، ادامه می‌دهیم تا UI لود شود (شاید در حالت تست هستیم)
       }
 
       // نمایش آدرس کاربر
       const depositAddressEl = document.getElementById("deposit-address");
       if (depositAddressEl && resp.user && resp.user.deposit_address) {
         depositAddressEl.innerText = resp.user.deposit_address;
+        // فعال کردن دکمه کپی (تغییر استایل)
+        depositAddressEl.parentElement.classList.remove("opacity-50");
       }
 
       // دریافت اطلاعات مالی
